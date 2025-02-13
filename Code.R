@@ -3,6 +3,7 @@ library(tidyr)
 library(haven)
 library(table1)
 library(psych)
+library(stargazer)
 
 #Reading data
 raw_data <- read_dta("data.dta")
@@ -14,10 +15,6 @@ raw_data %>%
   describe() %>%
   select(n, mean, sd, min, max)
 
-#Descriptive table using table1
-dataset_descriptive <- raw_data %>% 
-  select(lnER, lnEnergy:Concentration) 
-table1(~ lnER + lnEnergy + Coalratio + Oilratio + Gasratio + lnEnergyeff + lnPcca + lnDa + lnSize 
-       + lnAge + Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
-       data=dataset_descriptive, na.rm = T)
+#Descriptive table using stargazer (nice layout)
+stargazer(as.data.frame(dataset_descriptive), type = "html", title = "Summary statistics.", digits = 3, out = "Summary_statistics.html")
 
