@@ -1,0 +1,5 @@
+library(haven)
+raw_data <- read_dta("data.dta")
+summary(raw_data)
+library(dplyr)
+library(tidyr)
