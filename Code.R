@@ -4,6 +4,7 @@ library(haven)
 library(table1)
 library(psych)
 library(stargazer)
+library(plm)
 
 #Reading data
 raw_data <- read_dta("data.dta")
