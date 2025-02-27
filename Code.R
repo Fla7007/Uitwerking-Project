@@ -19,6 +19,8 @@ raw_data %>%
   select(n, mean, sd, min, max)
 
 #Descriptive table using stargazer (nice layout)
+dataset_descriptive <- raw_data %>% 
+  select(lnER, lnEnergy:Concentration) 
 stargazer(as.data.frame(dataset_descriptive), type = "html", title = "Summary statistics.", digits = 3, out = "Summary_statistics.html")
 
 #Regression models
@@ -63,6 +65,6 @@ summary(model5)
 model5_RSE <- coeftest(model5, vcov. = vcovHC, type = "HC1") ###WARNING: difficult to run! 
 
 ##Overview of all models with RSE
-huxreg(model1_RSE, model2_RSE, model3_RSE, model4_RSE, model5_RSE)
+stargazer(model1_RSE, model2_RSE, model3_RSE, model4_RSE, model5_RSE, type = "html", title = "Benchmark regression results.", digits = 3, out = "Benchmark_regression_results.html")
 
 
