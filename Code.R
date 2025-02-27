@@ -5,6 +5,7 @@ library(psych)
 library(stargazer)
 library(plm)
 library(AER)
+library(huxtable)
 
 #Reading data
 raw_data <- read_dta("data.dta")
@@ -25,13 +26,14 @@ stargazer(as.data.frame(dataset_descriptive), type = "html", title = "Summary st
 ##Regression model 1 without FE and control variables
 model1 <- lm(lnEnergy~lnER, data = raw_data)
 summary(model1)
-coeftest(model1, vcov. = vcovHC, type = "HC1")
+model1_RSE <- coeftest(model1, vcov. = vcovHC, type = "HC1")
+
 
 ##Regression model 2 with control variables and without FE
 model2 <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, data = raw_data)
 summary(model2)
-coeftest(model2, vcov. = vcovHC, type = "HC1")
+model2_RSE <- coeftest(model2, vcov. = vcovHC, type = "HC1")
 
 ##Regression model 3 with control variables and industry FE
 model3 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
@@ -40,7 +42,7 @@ model3 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               index = "ind_final",
               model = "within")
 summary(model3)
-coeftest(model3, vcov. = vcovHC, type = "HC1")
+model3_RSE <- coeftest(model3, vcov. = vcovHC, type = "HC1") ###WARNING: difficult to run!
 
 ##Regression model 4 with control variables, year FE and firm FE
 model4 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
@@ -49,7 +51,7 @@ model4 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               index = c("id_in_panel", "year"),
               model = "within")
 summary(model4)
-coeftest(model4, vcov. = vcovHC, type = "HC1")
+model4_RSE <- coeftest(model4, vcov. = vcovHC, type = "HC1")
 
 ##Regression model 5 with control variables and all FE
 model5 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
@@ -58,6 +60,9 @@ model5 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               index = c("ind_final", "id_in_panel", "year"),
               model = "within")
 summary(model5)
-coeftest(model5, vcov. = vcovHC, type = "HC1")
+model5_RSE <- coeftest(model5, vcov. = vcovHC, type = "HC1") ###WARNING: difficult to run! 
+
+##Overview of all models with RSE
+huxreg(model1_RSE, model2_RSE, model3_RSE, model4_RSE, model5_RSE)
 
 
