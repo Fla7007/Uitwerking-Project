@@ -44,7 +44,22 @@ model3 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               index = "ind_final",
               model = "within")
 summary(model3)
-model3_RSE <- coeftest(model3, vcov. = vcovHC, type = "HC1") ###WARNING: difficult to run!
+model3_RSE <- coeftest(model3, vcov. = vcovHC, type = "HC1")
+
+###Regression model 3 using manually demeaning (not optimal yet)
+dataset_model3 <- group_by(raw_data, ind_final)
+lnER_means <- summarise(dataset_model3, mean(lnER, na.rm = T))
+lnEnergy_means <- summarise(dataset_model3, mean(lnEnergy, na.rm = T))
+
+dataset_model3_demeaned <- raw_data
+for (i in 1:dim(lnER_means)[1]) {
+  posi <- which(raw_data$ind_final == lnER_means$ind_final[i])
+  dataset_model3_demeaned[posi, "lnER"] <- raw_data[posi, "lnER"] - as.numeric(lnER_means[i,2])
+  dataset_model3_demeaned[posi, "lnEnergy"] <- raw_data[posi, "lnEnergy"] - as.numeric(lnEnergy_means[i,2])}
+
+coeftest(lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+            + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration
+            , dataset_model3_demeaned), vcov. = vcovHC, type = "HC1")
 
 ##Regression model 4 with control variables, year FE and firm FE
 model4 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
@@ -62,9 +77,11 @@ model5 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               index = c("ind_final", "id_in_panel", "year"),
               model = "within")
 summary(model5)
-model5_RSE <- coeftest(model5, vcov. = vcovHC, type = "HC1") ###WARNING: difficult to run! 
+model5_RSE <- coeftest(model5, vcov. = vcovHC, type = "HC1") 
 
 ##Overview of all models with RSE
 stargazer(model1_RSE, model2_RSE, model3_RSE, model4_RSE, model5_RSE, type = "html", title = "Benchmark regression results.", digits = 3, out = "Benchmark_regression_results.html")
+
+
 
 
