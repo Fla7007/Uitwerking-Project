@@ -33,7 +33,7 @@ model1_RSE <- coeftest(model1, vcov. = vcovHC, type = "HC1")
 
 ##Regression model 2 with control variables and without FE
 model2 <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
-              + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, data = raw_data)
+             + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, data = raw_data)
 summary(model2)
 model2_RSE <- coeftest(model2, vcov. = vcovHC, type = "HC1")
 
@@ -70,9 +70,10 @@ summary(model4)
 model4_RSE <- coeftest(model4, vcov. = vcovHC, type = "HC1")
 
 ##Regression model 5 with control variables and all FE (industry FE, year FE and firm FE) --> Error: cannot allocate vector of size 44.6 Gb
+
 dataset_model5 <- group_by(raw_data, ind_final)
-lnER_means <- summarise(dataset_model5, ind_final = unique(ind_final), mean_lnER = mean(lnER, na.rm = TRUE))
-lnEnergy_means <- summarise(dataset_model5, ind_final = unique(ind_final), mean_lnEnergy = mean(lnEnergy, na.rm = TRUE))
+lnER_means <- summarise(dataset_model5, mean_lnER = mean(lnER, na.rm = TRUE))
+lnEnergy_means <- summarise(dataset_model5, mean_lnEnergy = mean(lnEnergy, na.rm = TRUE))
 dataset_model5_demeaned <- raw_data
 
 for (i in 1:nrow(lnER_means)) {
@@ -96,7 +97,5 @@ model5_RSE <- coeftest(model, vcov. = robust_se)
 
 ##Overview of all models with RSE
 stargazer(model1_RSE, model2_RSE, model3_RSE, model4_RSE, type = "html", title = "Benchmark regression results.", digits = 3, out = "Benchmark_regression_results.html")
-
-
 
 
