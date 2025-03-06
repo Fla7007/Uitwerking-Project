@@ -91,8 +91,8 @@ model5_RSE <- coeftest(model5, vcov. = vcovHC, type = "HC1")
 ##Regression model 5 with control variables and all FE (using manually demeaning)
 ###Error: cannot allocate vector of size 44.6 Gb
 dataset_model5 <- group_by(raw_data, ind_final)
-lnER_means <- summarise(dataset_model5, ind_final = unique(ind_final), mean_lnER = mean(lnER, na.rm = TRUE))
-lnEnergy_means <- summarise(dataset_model5, ind_final = unique(ind_final), mean_lnEnergy = mean(lnEnergy, na.rm = TRUE))
+lnER_means <- summarise(dataset_model5, mean_lnER = mean(lnER, na.rm = TRUE))
+lnEnergy_means <- summarise(dataset_model5, mean_lnEnergy = mean(lnEnergy, na.rm = TRUE))
 dataset_model5_demeaned <- raw_data
 
 for (i in 1:nrow(lnER_means)) {
