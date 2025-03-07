@@ -37,7 +37,17 @@ model2 <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
 summary(model2)
 model2_RSE <- coeftest(model2, vcov. = vcovHC, type = "HC1")
 
+##Regression model 3 with control variables and industry FE (using PLM) --> we do not get correct coefficients
+model3 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+              + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
+              data = raw_data,
+              index = c("ind_final"),
+              model = "within")
+summary(model3)
+model3_RSE <- coeftest(model3, vcov. = vcovHC, type = "HC1")
+
 ##Regression model 3 with control variables and industry FE (using manually demeaning) 
+## we get correct coefficients and correct standard errors 
 dataset_model3 <- group_by(raw_data, ind_final)
 lnER_means <- summarise(dataset_model3, mean_lnER = mean(lnER, na.rm = TRUE))
 lnEnergy_means <- summarise(dataset_model3, mean_lnEnergy = mean(lnEnergy, na.rm = TRUE))
@@ -60,7 +70,30 @@ model <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
 robust_se <- vcovHC(model, type = "HC1")
 model3_RSE <- coeftest(model, vcov. = robust_se)
 
-##Regression model 4 with control variables, year FE and firm FE
+##Regression model 4 with control variables, year FE and firm FE (using manually demeaning) --> we do not get correct coefficients 
+dataset_model4 <- group_by(raw_data,id_in_panel)
+lnER_means <- summarise(dataset_model4, mean_lnER = mean(lnER, na.rm = TRUE))
+lnEnergy_means <- summarise(dataset_model4, mean_lnEnergy = mean(lnEnergy, na.rm = TRUE))
+
+dataset_model4_demeaned <- raw_data
+
+for (i in 1:nrow(lnER_means)) {
+  posi <- which(raw_data$id_in_panel == lnER_means$id_in_panel[i])
+  dataset_model4_demeaned[posi, "lnER"] <- raw_data[posi, "lnER"] - lnER_means$mean_lnER[i]
+  dataset_model4_demeaned[posi, "lnEnergy"] <- raw_data[posi, "lnEnergy"] - lnEnergy_means$mean_lnEnergy[i]
+}
+
+model4 <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+             + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + 
+               factor(year), factor(id_in_panel), 
+             data = dataset_model4_demeaned)
+
+robust_se <- vcovHC(model4, type = "HC1")
+model4_RSE <- coeftest(model4, vcov. = robust_se)
+huxreg(model4_RSE)
+
+
+##Regression model 4 with control variables, year FE and firm FE (using PLM) --> we do not get correct coefficients 
 model4 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
               data = raw_data,
@@ -69,7 +102,18 @@ model4 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
 summary(model4)
 model4_RSE <- coeftest(model4, vcov. = vcovHC, type = "HC1")
 
-##Regression model 5 with control variables and all FE (industry FE, year FE and firm FE) --> Error: cannot allocate vector of size 44.6 Gb
+##Regression model 5 with control variables and all FE (using PLM) --> we do not get correct coefficients  
+model5 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+              + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
+              data = raw_data,
+              index = c("id_in_panel", "year","ind_final"),
+              model = "within")
+summary(model5)
+model5_RSE <- coeftest(model5, vcov. = vcovHC, type = "HC1")
+
+
+##Regression model 5 with control variables and all FE (industry FE, year FE and firm FE) using manually demeaning 
+##Error: cannot allocate vector of size 44.6 Gb
 
 dataset_model5 <- group_by(raw_data, ind_final)
 lnER_means <- summarise(dataset_model5, mean_lnER = mean(lnER, na.rm = TRUE))
@@ -96,6 +140,4 @@ model5_RSE <- coeftest(model, vcov. = robust_se)
 
 
 ##Overview of all models with RSE
-stargazer(model1_RSE, model2_RSE, model3_RSE, model4_RSE, type = "html", title = "Benchmark regression results.", digits = 3, out = "Benchmark_regression_results.html")
-
-
+stargazer(model1_RSE, model2_RSE, model3_RSE, model4_RSE, model5_RSE, type = "html", title = "Benchmark regression results.", digits = 3, out = "Benchmark_regression_results.html")
