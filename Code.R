@@ -12,32 +12,41 @@ raw_data <- read_dta("data.dta")
 summary(raw_data)
 View(raw_data)
 
-#Descriptive table (n, mean, sd, min, max)
+#######################
+###Descriptive table###
+#######################
+
+#using select and describe (n, mean, sd, min, max)
 raw_data %>% 
   select(lnER, lnEnergy:Concentration) %>%
   describe() %>%
   select(n, mean, sd, min, max)
 
-#Descriptive table using stargazer (nice layout)
+#using stargazer
 dataset_descriptive <- raw_data %>% 
   select(lnER, lnEnergy:Concentration) 
 stargazer(as.data.frame(dataset_descriptive), type = "html", title = "Summary statistics.", digits = 3, out = "Summary_statistics.html")
 
-#Regression models
+#######################
+###Regression models###
+#######################
 
-##Regression model 1 without FE and control variables
+# Model 1 (without FE or control variables)
 model1 <- lm(lnEnergy~lnER, data = raw_data)
 summary(model1)
 model1_RSE <- coeftest(model1, vcov. = vcovHC, type = "HC1")
+## Gives the same point estimators and standard errors as in the original paper
 
 
-##Regression model 2 with control variables and without FE
+# Model 2 (with control variables, without FE)
 model2 <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
              + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, data = raw_data)
 summary(model2)
 model2_RSE <- coeftest(model2, vcov. = vcovHC, type = "HC1")
+## Gives the same point estimators and standard errors as in the original paper
 
-##Regression model 3 with control variables and industry FE (using PLM) --> we do not get correct coefficients
+
+# Model 3 using plm (with control variables and industry FE)
 model3 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
               data = raw_data,
@@ -45,9 +54,12 @@ model3 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               model = "within")
 summary(model3)
 model3_RSE <- coeftest(model3, vcov. = vcovHC, type = "HC1")
+## Does NOT give the same results as in the orginal paper: 
+## there is no constant, the standard errors aren't the same and despite the values of the point estimators 
+## being the same, the significant for some of them differ 
 
-##Regression model 3 with control variables and industry FE (using manually demeaning) 
-## we get correct coefficients and correct standard errors 
+
+# Model 3 using manually demeaning (with control variables and industry FE) 
 dataset_model3 <- group_by(raw_data, ind_final)
 lnER_means <- summarise(dataset_model3, mean_lnER = mean(lnER, na.rm = TRUE))
 lnEnergy_means <- summarise(dataset_model3, mean_lnEnergy = mean(lnEnergy, na.rm = TRUE))
@@ -69,8 +81,23 @@ model <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
 
 robust_se <- vcovHC(model, type = "HC1")
 model3_RSE <- coeftest(model, vcov. = robust_se)
+## Gives the same point estimators and standard errors as in the original paper. 
+## Only the intercept is wrong since we've added a factor of ind_final to incorporate the industry FE 
 
-##Regression model 4 with control variables, year FE and firm FE (using manually demeaning) --> we do not get correct coefficients 
+
+# Model 4 using plm (with control variables, year FE and firm FE) 
+model4 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+              + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
+              data = raw_data,
+              index = c("id_in_panel", "year"),
+              model = "within")
+summary(model4)
+model4_RSE <- coeftest(model4, vcov. = vcovHC, type = "HC1")
+## Does NOT give the same results as in the orginal paper: 
+## there is no constant and the values of the point estimators and standard errors aren't the same
+
+
+# Model 4 using manually demeaning (with control variables, year FE and firm FE) 
 dataset_model4 <- group_by(raw_data,id_in_panel)
 lnER_means <- summarise(dataset_model4, mean_lnER = mean(lnER, na.rm = TRUE))
 lnEnergy_means <- summarise(dataset_model4, mean_lnEnergy = mean(lnEnergy, na.rm = TRUE))
@@ -90,19 +117,11 @@ model4 <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
 
 robust_se <- vcovHC(model4, type = "HC1")
 model4_RSE <- coeftest(model4, vcov. = robust_se)
-huxreg(model4_RSE)
+## Does NOT give the same results as in the orginal paper: 
+## the values of the point estimators and standard errors aren't the same
 
 
-##Regression model 4 with control variables, year FE and firm FE (using PLM) --> we do not get correct coefficients 
-model4 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
-              + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
-              data = raw_data,
-              index = c("id_in_panel", "year"),
-              model = "within")
-summary(model4)
-model4_RSE <- coeftest(model4, vcov. = vcovHC, type = "HC1")
-
-##Regression model 5 with control variables and all FE (using PLM) --> we do not get correct coefficients  
+# Model 5 using plm (with control variables and all FE)  
 model5 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
               data = raw_data,
@@ -110,11 +129,12 @@ model5 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               model = "within")
 summary(model5)
 model5_RSE <- coeftest(model5, vcov. = vcovHC, type = "HC1")
+## Does NOT give the same results as in the orginal paper: 
+## there is no constant and the values of the point estimators and standard errors aren't the same
+## We also observe that this code gives the exact same output as the plm of model 4
 
 
-##Regression model 5 with control variables and all FE (industry FE, year FE and firm FE) using manually demeaning 
-##Error: cannot allocate vector of size 44.6 Gb
-
+# Model 5 using manually demeaning (with control variables and all FE) 
 dataset_model5 <- group_by(raw_data, ind_final)
 lnER_means <- summarise(dataset_model5, mean_lnER = mean(lnER, na.rm = TRUE))
 lnEnergy_means <- summarise(dataset_model5, mean_lnEnergy = mean(lnEnergy, na.rm = TRUE))
@@ -137,7 +157,11 @@ model <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
 
 robust_se <- vcovHC(model, type = "HC1")
 model5_RSE <- coeftest(model, vcov. = robust_se)
+## We were unable to run this code since our computers cannot compute it for such a large dataset
+## Error: cannot allocate vector of size 44.6 Gb
 
 
-##Overview of all models with RSE
-stargazer(model1_RSE, model2_RSE, model3_RSE, model4_RSE, model5_RSE, type = "html", title = "Benchmark regression results.", digits = 3, out = "Benchmark_regression_results.html")
+# Overview of all models with RSE
+stargazer(model1_RSE, model2_RSE, model3_RSE, model4_RSE, model5_RSE, type = "html", 
+          title = "Benchmark regression results.", digits = 3, out = "Benchmark_regression_results.html")
+## Currently using: model1, model2, model3 demeaning, model4 plm, model5 plm
