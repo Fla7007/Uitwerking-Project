@@ -6,6 +6,7 @@ library(stargazer)
 library(plm)
 library(AER)
 library(huxtable)
+library(fixest)
 
 #Reading data
 raw_data <- read_dta("data.dta")
@@ -35,7 +36,7 @@ stargazer(as.data.frame(dataset_descriptive), type = "html", title = "Summary st
 model1 <- lm(lnEnergy~lnER, data = raw_data)
 summary(model1)
 model1_RSE <- coeftest(model1, vcov. = vcovHC, type = "HC1")
-## Gives the same point estimators and standard errors as in the original paper
+## Gives the same point estimators and standard errors as in the original paper, no R²
 
 
 # Model 2 (with control variables, without FE)
@@ -43,7 +44,7 @@ model2 <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
              + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, data = raw_data)
 summary(model2)
 model2_RSE <- coeftest(model2, vcov. = vcovHC, type = "HC1")
-## Gives the same point estimators and standard errors as in the original paper
+## Gives the same point estimators and standard errors as in the original paper, no R²
 
 
 # Model 3 using plm (with control variables and industry FE)
@@ -84,6 +85,12 @@ model3_RSE <- coeftest(model, vcov. = robust_se)
 ## Gives the same point estimators and standard errors as in the original paper. 
 ## Only the intercept is wrong since we've added a factor of ind_final to incorporate the industry FE 
 
+# Model 3 using feols (with control variables and industry FE)
+model3_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                    + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | ind_final, 
+                    data = raw_data,
+                    vcov = "HC1")
+
 
 # Model 4 using plm (with control variables, year FE and firm FE) 
 model4 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
@@ -95,7 +102,6 @@ summary(model4)
 model4_RSE <- coeftest(model4, vcov. = vcovHC, type = "HC1")
 ## Does NOT give the same results as in the orginal paper: 
 ## there is no constant and the values of the point estimators and standard errors aren't the same
-
 
 # Model 4 using manually demeaning (with control variables, year FE and firm FE) 
 dataset_model4 <- group_by(raw_data,id_in_panel)
@@ -120,6 +126,13 @@ model4_RSE <- coeftest(model4, vcov. = robust_se)
 ## Does NOT give the same results as in the orginal paper: 
 ## the values of the point estimators and standard errors aren't the same
 
+# Model 4 using feols (with control variables, year FE and firm FE)
+model4_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year, 
+                data = raw_data,
+                vcov = "HC1")
+## Correct point estimators, SE sometimes slightly differ, no constant, used much more observations (different R²)
+
 
 # Model 5 using plm (with control variables and all FE)  
 model5 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
@@ -132,7 +145,6 @@ model5_RSE <- coeftest(model5, vcov. = vcovHC, type = "HC1")
 ## Does NOT give the same results as in the orginal paper: 
 ## there is no constant and the values of the point estimators and standard errors aren't the same
 ## We also observe that this code gives the exact same output as the plm of model 4
-
 
 # Model 5 using manually demeaning (with control variables and all FE) 
 dataset_model5 <- group_by(raw_data, ind_final)
@@ -160,8 +172,33 @@ model5_RSE <- coeftest(model, vcov. = robust_se)
 ## We were unable to run this code since our computers cannot compute it for such a large dataset
 ## Error: cannot allocate vector of size 44.6 Gb
 
+# Model 5 using feols (with control variables and all FE)
+model5_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                    + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                    data = raw_data,
+                    vcov = "HC1")
+## Correct point estimators, SE sometimes slightly differ, no constant, used much more observations (different R²) 
+
 
 # Overview of all models with RSE
 stargazer(model1_RSE, model2_RSE, model3_RSE, model4_RSE, model5_RSE, type = "html", 
           title = "Benchmark regression results.", digits = 3, out = "Benchmark_regression_results.html")
-## Currently using: model1, model2, model3 demeaning, model4 plm, model5 plm
+## Models used when table was made: model1, model2, model3 demeaning, model4 plm, model5 plm
+
+huxreg(model1_RSE, model2_RSE,model3_RSE, model4_RSE, model5_RSE, 
+       statistics = c("N. obs." = "nobs", "R squared" = "r.squared"))
+## Model used when table was made: model1, model2, model3 feols, model4 feols, model5 feols 
+
+
+
+### Eventueel nuttig bij robustness analyse
+# Alternative model 4 with clustered SE
+model4 <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year, 
+                data = raw_data,
+                vcov = "cluster")
+# Alternative model 5 with clustered SE
+model4 <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                data = raw_data,
+                vcov = "cluster")
