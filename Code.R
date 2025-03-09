@@ -90,7 +90,7 @@ model3_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Exp
                     + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | ind_final, 
                     data = raw_data,
                     vcov = "HC1")
-
+## Correct point estimators and SE, no constant (due to FE)
 
 # Model 4 using plm (with control variables, year FE and firm FE) 
 model4 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
@@ -131,7 +131,7 @@ model4_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Exp
                 + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year, 
                 data = raw_data,
                 vcov = "HC1")
-## Correct point estimators, SE sometimes slightly differ, no constant, used much more observations (different R²)
+## Correct point estimators, SE sometimes slightly differ, no constant (due to FE), used much more observations (different R²)
 
 
 # Model 5 using plm (with control variables and all FE)  
@@ -177,13 +177,14 @@ model5_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Exp
                     + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
                     data = raw_data,
                     vcov = "HC1")
-## Correct point estimators, SE sometimes slightly differ, no constant, used much more observations (different R²) 
+## Correct point estimators, SE sometimes slightly differ, no constant (due to FE), used much more observations (different R²) 
 
 
 # Overview of all models with RSE
 stargazer(model1_RSE, model2_RSE, model3_RSE, model4_RSE, model5_RSE, type = "html", 
           title = "Benchmark regression results.", digits = 3, out = "Benchmark_regression_results.html")
 ## Models used when table was made: model1, model2, model3 demeaning, model4 plm, model5 plm
+## Does NOT work with the models made by feols
 
 huxreg(model1_RSE, model2_RSE,model3_RSE, model4_RSE, model5_RSE, 
        statistics = c("N. obs." = "nobs", "R squared" = "r.squared"))
