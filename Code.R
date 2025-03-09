@@ -32,13 +32,14 @@ stargazer(as.data.frame(dataset_descriptive), type = "html", title = "Summary st
 ###Regression models###
 #######################
 
+### Model 1 ###
 # Model 1 (without FE or control variables)
 model1 <- lm(lnEnergy~lnER, data = raw_data)
 summary(model1)
 model1_RSE <- coeftest(model1, vcov. = vcovHC, type = "HC1")
 ## Gives the same point estimators and standard errors as in the original paper, no R²
 
-
+### Model 2 ###
 # Model 2 (with control variables, without FE)
 model2 <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
              + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, data = raw_data)
@@ -46,7 +47,7 @@ summary(model2)
 model2_RSE <- coeftest(model2, vcov. = vcovHC, type = "HC1")
 ## Gives the same point estimators and standard errors as in the original paper, no R²
 
-
+### Model 3 ###
 # Model 3 using plm (with control variables and industry FE)
 model3 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
@@ -58,7 +59,6 @@ model3_RSE <- coeftest(model3, vcov. = vcovHC, type = "HC1")
 ## Does NOT give the same results as in the orginal paper: 
 ## there is no constant, the standard errors aren't the same and despite the values of the point estimators 
 ## being the same, the significant for some of them differ 
-
 
 # Model 3 using manually demeaning (with control variables and industry FE) 
 dataset_model3 <- group_by(raw_data, ind_final)
@@ -92,6 +92,7 @@ model3_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Exp
                     vcov = "HC1")
 ## Correct point estimators and SE, no constant (due to FE)
 
+### Model 4 ###
 # Model 4 using plm (with control variables, year FE and firm FE) 
 model4 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
@@ -133,7 +134,7 @@ model4_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Exp
                 vcov = "HC1")
 ## Correct point estimators, SE sometimes slightly differ, no constant (due to FE), used much more observations (different R²)
 
-
+### Model 5 ###
 # Model 5 using plm (with control variables and all FE)  
 model5 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
@@ -180,7 +181,7 @@ model5_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Exp
 ## Correct point estimators, SE sometimes slightly differ, no constant (due to FE), used much more observations (different R²) 
 
 
-# Overview of all models with RSE
+### Overview ###
 stargazer(model1_RSE, model2_RSE, model3_RSE, model4_RSE, model5_RSE, type = "html", 
           title = "Benchmark regression results.", digits = 3, out = "Benchmark_regression_results.html")
 ## Models used when table was made: model1, model2, model3 demeaning, model4 plm, model5 plm
