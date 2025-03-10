@@ -2,11 +2,8 @@ library(dplyr)
 library(tidyr)
 library(haven)
 library(psych)
-library(stargazer)
-library(plm)
 library(AER)
-library(huxtable)
-library(fixest)
+
 
 #Reading data
 raw_data <- read_dta("data.dta")
@@ -24,6 +21,7 @@ raw_data %>%
   select(n, mean, sd, min, max)
 
 #using stargazer
+library(stargazer)
 dataset_descriptive <- raw_data %>% 
   select(lnER, lnEnergy:Concentration) 
 stargazer(as.data.frame(dataset_descriptive), type = "html", title = "Summary statistics.", digits = 3, out = "Summary_statistics.html")
@@ -49,6 +47,7 @@ model2_RSE <- coeftest(model2, vcov. = vcovHC, type = "HC1")
 
 ### Model 3 ###
 # Model 3 using plm (with control variables and industry FE)
+library(plm)
 model3 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
               data = raw_data,
@@ -86,6 +85,7 @@ model3_RSE <- coeftest(model, vcov. = robust_se)
 ## Only the intercept is wrong since we've added a factor of ind_final to incorporate the industry FE 
 
 # Model 3 using feols (with control variables and industry FE)
+library(fixest)
 model3_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                     + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | ind_final, 
                     data = raw_data,
@@ -182,14 +182,32 @@ model5_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Exp
 
 
 ### Overview ###
+#Using stargazer (Models used: model1, model2, model3 demeaning, model4 plm, model5 plm)
 stargazer(model1_RSE, model2_RSE, model3_RSE, model4_RSE, model5_RSE, type = "html", 
           title = "Benchmark regression results.", digits = 3, out = "Benchmark_regression_results.html")
-## Models used when table was made: model1, model2, model3 demeaning, model4 plm, model5 plm
 ## Does NOT work with the models made by feols
 
+#Using huxreg (Model used: model1, model2, model3 feols, model4 feols, model5 feols)
+library(huxtable)
 huxreg(model1_RSE, model2_RSE,model3_RSE, model4_RSE, model5_RSE, 
        statistics = c("N. obs." = "nobs", "R squared" = "r.squared"))
-## Model used when table was made: model1, model2, model3 feols, model4 feols, model5 feols 
+
+#Using modelsummary
+library(modelsummary)
+library(webshot2)
+
+model_list <- list(
+  "model 1" = model1_RSE,
+  "model 2" = model2_RSE,
+  "model 3" = model3_RSE,
+  "model 4" = model4_RSE,
+  "model 5" = model5_RSE)
+
+modelsummary(model_list,
+             stars = TRUE,
+             gof_omit = "IC|Log|Adj|F|RMSE|R2 Within",
+             output = "Benchmark regression results (lm + feols).png",
+             title = "Benchmark regression results.") 
 
 
 
