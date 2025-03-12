@@ -134,6 +134,18 @@ model4_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Exp
                 vcov = "HC1")
 ## Correct point estimators, SE sometimes slightly differ, no constant (due to FE), used much more observations (different R²)
 
+#Model 4 using felm (with control variables, year FE and firm FE)
+library(lfe)
+?`lfe-package`
+?felm
+model4_1 <- felm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                 + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year, 
+                 data = raw_data)
+model4_RSE_1 <- coeftest(model4_1, vcov = vcovHC(model4_1, type="HC1"))
+huxreg(model4_RSE, model4_1, model4_RSE_1, 
+       statistics = c("N.obs." = "nobs", "R squared" = "r.squared"))
+
+
 ### Model 5 ###
 # Model 5 using plm (with control variables and all FE)  
 model5 <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
@@ -180,6 +192,13 @@ model5_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Exp
                     vcov = "HC1")
 ## Correct point estimators, SE sometimes slightly differ, no constant (due to FE), used much more observations (different R²) 
 
+#Model 5 using felm (with control variables and all FE)
+model5_1 <- felm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                 + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                 data = raw_data)
+model5_RSE_1 <- coeftest(model5_1, vcov = vcovHC(model5_1, type="HC1"))
+huxreg(model5_RSE, model5_1, model5_RSE_1, 
+       statistics = c("N.obs." = "nobs", "R squared" = "r.squared"))
 
 ### Overview ###
 #Using stargazer (Models used: model1, model2, model3 demeaning, model4 plm, model5 plm)
