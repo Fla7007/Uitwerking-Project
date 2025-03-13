@@ -134,7 +134,7 @@ model4_demean <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Exp
 
 robust_se <- vcovHC(model4_demean, type = "HC1")
 model4_demean_RSE <- coeftest(model4_demean, vcov. = robust_se)
-## Does NOT give the same results as in the orginal paper: 
+## Does NOT give the same results as in the original paper: 
 ## the values of the point estimators and standard errors aren't the same
 
 # Model 4 using feols (with control variables, year FE and firm FE)
@@ -160,7 +160,7 @@ model5_plm <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Expor
               model = "within")
 summary(model5_plm)
 model5_plm_RSE <- coeftest(model5_plm, vcov. = vcovHC, type = "HC1")
-## Does NOT give the same results as in the orginal paper: 
+## Does NOT give the same results as in the original paper: 
 ## there is no constant and the values of the point estimators and standard errors aren't the same
 ## We also observe that this code gives the exact same output as the plm of model 4
 
@@ -235,14 +235,20 @@ modelsummary(model_list,
 
 
 
-### Eventueel nuttig bij robustness analyse
+### Robustness analysis
+# Alternative model 3 with clusterd SE
+model3_feols_clustered <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                          + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | ind_final, 
+                          data = raw_data,
+                          vcov = "cluster")
 # Alternative model 4 with clustered SE
-model4 <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
-                + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year, 
-                data = raw_data,
-                vcov = "cluster")
+model4_feols_clustered <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                          + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year, 
+                          data = raw_data,
+                          vcov = "cluster")
+
 # Alternative model 5 with clustered SE
-model4 <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
-                + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
-                data = raw_data,
-                vcov = "cluster")
+model5_feols_clustered <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                          + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                          data = raw_data,
+                          vcov = "cluster")
