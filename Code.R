@@ -1,9 +1,17 @@
+#Loading necessary packages
 library(dplyr)
 library(tidyr)
 library(haven)
 library(psych)
 library(AER)
-
+library(stargazer)
+library(plm)
+library(fixest)
+library(lfe)
+library(modelsummary)
+library(webshot2)
+library(huxtable)
+library(Hmisc)
 
 #Reading data
 raw_data <- read_dta("data.dta")
@@ -21,7 +29,6 @@ raw_data %>%
   select(n, mean, sd, min, max)
 
 #using stargazer
-library(stargazer)
 dataset_descriptive <- raw_data %>% 
   select(lnER, lnEnergy:Concentration) 
 stargazer(as.data.frame(dataset_descriptive), type = "html", title = "Summary statistics.", digits = 3, out = "Summary_statistics.html")
@@ -49,7 +56,6 @@ model2_RSE <- coeftest(model2, vcov. = vcovHC, type = "HC1")
 
 ### Model 3 ###
 # Model 3 using plm (with control variables and industry FE)
-library(plm)
 model3_plm <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
               + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
               data = raw_data,
@@ -87,7 +93,6 @@ model3_demean_RSE <- coeftest(model3_demean, vcov. = robust_se)
 ## Only the intercept is wrong since we've added a factor of ind_final to incorporate the industry FE 
 
 # Model 3 using feols (with control variables and industry FE)
-library(fixest)
 model3_feols_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                     + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | ind_final, 
                     data = raw_data,
@@ -95,7 +100,6 @@ model3_feols_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own
 ## Correct point estimators and SE, no constant (due to FE)
 
 #Model 3 using felm (with control variables, year FE and firm FE)
-library(lfe)
 model3_felm <- felm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                  + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | ind_final, 
                  data = raw_data)
@@ -212,14 +216,10 @@ stargazer(model1_RSE, model2_RSE, model3_demean_RSE, model4_plm_RSE, model5_plm_
 ## Stargazer does NOT work with the models made by feols
 
 #Using huxreg 
-library(huxtable)
 huxreg(model1_RSE, model2_RSE,model3_feols_RSE, model4_feols_RSE, model5_feols_RSE, 
        statistics = c("N. obs." = "nobs", "R squared" = "r.squared"))
 
 #Using modelsummary
-library(modelsummary)
-library(webshot2)
-
 model_list <- list(
   "model 1" = model1_RSE,
   "model 2" = model2_RSE,
@@ -234,8 +234,61 @@ modelsummary(model_list,
              title = "Benchmark regression results.") 
 
 
+##########################
+### Robustness analysis###
+##########################
 
-### Robustness analysis
+### Control variables ###
+# Correlation/p-value table
+cor <- round(rcorr(as.matrix(raw_data))$r, 3)
+cor[, c("lnEnergy", "lnER")]
+
+cor_pvalue <- round(rcorr(as.matrix(raw_data))$P,3)
+cor_pvalue[, c("lnEnergy", "lnER")]
+## Based on this p-value table, almost all variables in our data set are significantly correlated with lnEnergy (Y) and lnER (X). 
+## So actually all variables might be chosen as control variables, except for Gasratio and TargetDummy
+
+# New model with other selection of control variables, without FE
+model_new <- feols(lnEnergy ~ lnER + citycode + age + L + area_final + Coalratio + Oilratio + lnEnergyeff + lnPcca + lnDa +
+                   lnSize + lnAge + Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration +
+                     Lnexport + LnERSO2 + LnERCOD + SO2removalrate + reductionper + codtarget + Lncoalcons +
+                     Lnpollutint2005 + Lnenergyint2005 + Lnpollutint2001 + Lnenergyint2001 + HighPollution + Largefirm +
+                     energy_intensive + Lnfirmenergypre05,
+                   data = raw_data,
+                   vcov = "HC1")
+
+# New model with other selection of control variables, with industry FE
+model_new_indFE <- feols(lnEnergy ~ lnER + citycode + age + L + area_final + Coalratio + Oilratio + lnEnergyeff + lnPcca + lnDa +
+                          lnSize + lnAge + Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration +
+                          Lnexport + LnERSO2 + LnERCOD + SO2removalrate + reductionper + codtarget + Lncoalcons +
+                          Lnpollutint2005 + Lnenergyint2005 + Lnpollutint2001 + Lnenergyint2001 + HighPollution + Largefirm +
+                          energy_intensive + Lnfirmenergypre05|ind_final,
+                        data = raw_data,
+                        vcov = "HC1")
+
+# New model with other selection of control variables, with year and firm FE
+model_new_firmyearFE <- feols(lnEnergy ~ lnER + citycode + age + L + area_final + Coalratio + Oilratio + lnEnergyeff + lnPcca + lnDa +
+                          lnSize + lnAge + Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration +
+                          Lnexport + LnERSO2 + LnERCOD + SO2removalrate + reductionper + codtarget + Lncoalcons +
+                          Lnpollutint2005 + Lnenergyint2005 + Lnpollutint2001 + Lnenergyint2001 + HighPollution + Largefirm +
+                          energy_intensive + Lnfirmenergypre05|year + id_in_panel,
+                        data = raw_data,
+                        vcov = "HC1")
+
+# New model with other selection of control variables, with all FE
+model_new_allFE <- feols(lnEnergy ~ lnER + citycode + age + L + area_final + Coalratio + Oilratio + lnEnergyeff + lnPcca + lnDa +
+                                lnSize + lnAge + Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration +
+                                Lnexport + LnERSO2 + LnERCOD + SO2removalrate + reductionper + codtarget + Lncoalcons +
+                                Lnpollutint2005 + Lnenergyint2005 + Lnpollutint2001 + Lnenergyint2001 + HighPollution + Largefirm +
+                                energy_intensive + Lnfirmenergypre05|ind_final + year + id_in_panel,
+                              data = raw_data,
+                              vcov = "HC1")
+
+huxreg(model_new, model_new_indFE, model_new_firmyearFE, model_new_allFE, 
+       statistics = c("N. obs." = "nobs", "R squared" = "r.squared"))
+
+
+### Clustered SE ###
 # Alternative model 3 with clusterd SE
 model3_feols_clustered <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                           + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | ind_final, 
@@ -252,3 +305,9 @@ model5_feols_clustered <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge
                           + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
                           data = raw_data,
                           vcov = "cluster")
+
+# Dot-plot (very lelijk)
+library(ggplot2)
+raw_data %>% ggplot(aes(x = lnER, y = lnEnergy)) +
+  geom_point() + 
+  geom_smooth(method = "lm", se = F)
