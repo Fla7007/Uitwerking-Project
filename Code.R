@@ -240,11 +240,19 @@ modelsummary(model_list,
 
 ### Control variables ###
 # Correlation/p-value table
+library(writexl)
 cor <- round(rcorr(as.matrix(raw_data))$r, 3)
 cor[, c("lnEnergy", "lnER")]
+cor_selected <- as.data.frame(cor[, c("lnEnergy", "lnER")])
+cor_selected <- cbind(Variable = rownames(cor_selected), cor_selected)  # Add row names as a column
+write_xlsx(cor_selected, "correlation_table.xlsx")  # Excel file
 
 cor_pvalue <- round(rcorr(as.matrix(raw_data))$P,3)
 cor_pvalue[, c("lnEnergy", "lnER")]
+cor_pvalue_selected <- as.data.frame(cor_pvalue[, c("lnEnergy", "lnER")])
+cor_pvalue_selected <- cbind(Variable = rownames(cor_pvalue_selected), cor_pvalue_selected)  # Add row names as a column
+write_xlsx(cor_pvalue_selected, "pvalue_table.xlsx")  # Excel file
+
 ## Based on this p-value table, almost all variables in our data set are significantly correlated with lnEnergy (Y) and lnER (X). 
 ## So actually all variables might be chosen as control variables, except for Gasratio and TargetDummy
 
