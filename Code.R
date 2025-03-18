@@ -255,45 +255,41 @@ write_xlsx(cor_pvalue_selected, "pvalue_table.xlsx")  # Excel file
 
 ## Based on this p-value table, almost all variables in our data set are significantly correlated with lnEnergy (Y) and lnER (X). 
 ## So actually all variables might be chosen as control variables, except for Gasratio and TargetDummy
+## HOWEVER: since we are dealing with a large data set, this method might not be ideal so these findings should not be implemented
+
+# Double Lasso
+library(hdm)
+lasso_Y <- rlasso(lnEnergy ~ lnER + citycode + age + L + area_final + Coalratio + Oilratio + lnEnergyeff + lnPcca + lnDa +
+                    lnSize + lnAge + Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration +
+                    Lnexport + LnERSO2 + LnERCOD + SO2removalrate + reductionper + codtarget + Lncoalcons +
+                    Lnpollutint2005 + Lnenergyint2005 + Lnpollutint2001 + Lnenergyint2001 + HighPollution + Largefirm +
+                    energy_intensive + Lnfirmenergypre05 + Gasratio + TargetDummy,
+                  data = raw_data)
+
+lasso_X <- rlasso(lnER ~ citycode + age + L + area_final + Coalratio + Oilratio + lnEnergyeff + lnPcca + lnDa +
+                    lnSize + lnAge + Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration +
+                    Lnexport + LnERSO2 + LnERCOD + SO2removalrate + reductionper + codtarget + Lncoalcons +
+                    Lnpollutint2005 + Lnenergyint2005 + Lnpollutint2001 + Lnenergyint2001 + HighPollution + Largefirm +
+                    energy_intensive + Lnfirmenergypre05 + Gasratio + TargetDummy,
+                  data = raw_data)
+coef(lasso_Y)
+coef(lasso_X)
+# Variables with non-zero coefficients in both models: 
+# lnEnergyeff, lnDa, lnSize, Own, lnPcgdp, Concentration, LnERCOD, Lncoalcons, HighPollution, Largefirm, energy_intensive, Gasratio, TargetDummy
 
 # New model with other selection of control variables, without FE
-model_new <- feols(lnEnergy ~ lnER + citycode + age + L + area_final + Coalratio + Oilratio + lnEnergyeff + lnPcca + lnDa +
-                   lnSize + lnAge + Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration +
-                     Lnexport + LnERSO2 + LnERCOD + SO2removalrate + reductionper + codtarget + Lncoalcons +
-                     Lnpollutint2005 + Lnenergyint2005 + Lnpollutint2001 + Lnenergyint2001 + HighPollution + Largefirm +
-                     energy_intensive + Lnfirmenergypre05,
-                   data = raw_data,
-                   vcov = "HC1")
-
-# New model with other selection of control variables, with industry FE
-model_new_indFE <- feols(lnEnergy ~ lnER + citycode + age + L + area_final + Coalratio + Oilratio + lnEnergyeff + lnPcca + lnDa +
-                          lnSize + lnAge + Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration +
-                          Lnexport + LnERSO2 + LnERCOD + SO2removalrate + reductionper + codtarget + Lncoalcons +
-                          Lnpollutint2005 + Lnenergyint2005 + Lnpollutint2001 + Lnenergyint2001 + HighPollution + Largefirm +
-                          energy_intensive + Lnfirmenergypre05|ind_final,
-                        data = raw_data,
-                        vcov = "HC1")
-
-# New model with other selection of control variables, with year and firm FE
-model_new_firmyearFE <- feols(lnEnergy ~ lnER + citycode + age + L + area_final + Coalratio + Oilratio + lnEnergyeff + lnPcca + lnDa +
-                          lnSize + lnAge + Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration +
-                          Lnexport + LnERSO2 + LnERCOD + SO2removalrate + reductionper + codtarget + Lncoalcons +
-                          Lnpollutint2005 + Lnenergyint2005 + Lnpollutint2001 + Lnenergyint2001 + HighPollution + Largefirm +
-                          energy_intensive + Lnfirmenergypre05|year + id_in_panel,
-                        data = raw_data,
-                        vcov = "HC1")
+model_new_lm <- lm(lnEnergy ~ lnER + lnEnergyeff + lnDa + lnSize + Own + lnPcgdp + Concentration +
+                     LnERCOD + Lncoalcons + HighPollution + Largefirm + energy_intensive + Gasratio + TargetDummy,
+                   data = raw_data)
+model_new_lm_RSE <- coeftest(model_new_lm, vcov. = vcovHC, type = "HC1")
 
 # New model with other selection of control variables, with all FE
-model_new_allFE <- feols(lnEnergy ~ lnER + citycode + age + L + area_final + Coalratio + Oilratio + lnEnergyeff + lnPcca + lnDa +
-                                lnSize + lnAge + Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration +
-                                Lnexport + LnERSO2 + LnERCOD + SO2removalrate + reductionper + codtarget + Lncoalcons +
-                                Lnpollutint2005 + Lnenergyint2005 + Lnpollutint2001 + Lnenergyint2001 + HighPollution + Largefirm +
-                                energy_intensive + Lnfirmenergypre05|ind_final + year + id_in_panel,
-                              data = raw_data,
-                              vcov = "HC1")
+model_new_feols <- feols(lnEnergy ~ lnER + lnEnergyeff + lnDa + lnSize + Own + lnPcgdp + Concentration +
+                  LnERCOD + Lncoalcons + HighPollution + Largefirm + energy_intensive + Gasratio + TargetDummy|
+                  id_in_panel + year + ind_final,
+                data = raw_data, 
+                vcov = "HC1")
 
-huxreg(model_new, model_new_indFE, model_new_firmyearFE, model_new_allFE, 
-       statistics = c("N. obs." = "nobs", "R squared" = "r.squared"))
 
 
 ### Clustered SE ###
