@@ -370,7 +370,7 @@ plot(density(filtered_raw_data$lnAge))
 plot(density(filtered_raw_data$lnEnergy))
 
 matplot(filtered_raw_data$lnAge,filtered_raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(lnEnergy ~ Age, data = filtered_raw_data))
+res_miss <- summary(lm(lnEnergy ~ lnAge, data = filtered_raw_data))
 matplot(filtered_raw_data$lnAge, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*filtered_raw_data$lnAge, t="l", col=2, add=T)
 
 
@@ -404,6 +404,7 @@ matplot(filtered_raw_data$Export, res_miss$coefficients[1,1] + res_miss$coeffici
 matplot(log(filtered_raw_data$Export),filtered_raw_data$lnEnergy, pch=1)
 res <- summary(lm(filtered_raw_data$lnEnergy ~ log(filtered_raw_data$Export)))
 matplot(log(filtered_raw_data$Export), res$coefficients[1,1] + res$coefficients[2,1]*log(filtered_raw_data$Export), t="l", col=2, add=T)          
+#De code met log() geeft error.
                
 #lnOpen
 matplot(filtered_raw_data$lnOpen,filtered_raw_data$lnEnergy, pch=1)
@@ -445,7 +446,7 @@ matplot(filtered_raw_data$Endowment, res_miss$coefficients[1,1] + res_miss$coeff
 matplot(log(filtered_raw_data$Endowment),filtered_raw_data$lnEnergy, pch=1)
 res <- summary(lm(filtered_raw_data$lnEnergy ~ log(filtered_raw_data$Endowment)))
 matplot(log(filtered_raw_data$Endowment), res$coefficients[1,1] + res$coefficients[2,1]*log(filtered_raw_data$Endowment), t="l", col=2, add=T)
-               
+#De code met log() geeft error.               
                
 #Rail
 matplot(filtered_raw_data$Rail, filtered_raw_data$lnEnergy, pch=1)
@@ -460,7 +461,7 @@ matplot(filtered_raw_data$Rail, res_miss$coefficients[1,1] + res_miss$coefficien
                
 matplot(log(filtered_raw_data$Rail),filtered_raw_data$lnEnergy, pch=1)
 res <- summary(lm(filtered_raw_data$lnEnergy ~ log(filtered_raw_data$Rail)))
-               matplot(log(filtered_raw_data$Rail), res$coefficients[1,1] + res$coefficients[2,1]*log(filtered_raw_data$Rail), t="l", col=2, add=T)
+matplot(log(filtered_raw_data$Rail), res$coefficients[1,1] + res$coefficients[2,1]*log(filtered_raw_data$Rail), t="l", col=2, add=T)
                
                
 #lnPcgdp
@@ -487,3 +488,4 @@ matplot(filtered_raw_data$Concentration, res_miss$coefficients[1,1] + res_miss$c
 matplot(log(filtered_raw_data$Concentration),filtered_raw_data$lnEnergy, pch=1)
 res <- summary(lm(filtered_raw_data$lnEnergy ~ log(filtered_raw_data$Concentration)))
 matplot(log(filtered_raw_data$Concentration), res$coefficients[1,1] + res$coefficients[2,1]*log(filtered_raw_data$Concentration), t="l", col=2, add=T)
+#De code met log() geeft error.
