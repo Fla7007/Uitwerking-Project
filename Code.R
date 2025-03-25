@@ -99,7 +99,7 @@ model3_feols_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own
                     vcov = "HC1")
 ## Correct point estimators and SE, no constant (due to FE)
 
-#Model 3 using felm (with control variables, year FE and firm FE)
+#Model 3 using felm (with control variables, and industry FE)
 model3_felm <- felm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                  + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | ind_final, 
                  data = raw_data)
@@ -489,3 +489,36 @@ matplot(log(filtered_raw_data$Concentration),filtered_raw_data$lnEnergy, pch=1)
 res <- summary(lm(filtered_raw_data$lnEnergy ~ log(filtered_raw_data$Concentration)))
 matplot(log(filtered_raw_data$Concentration), res$coefficients[1,1] + res$coefficients[2,1]*log(filtered_raw_data$Concentration), t="l", col=2, add=T)
 #De code met log() geeft error.
+
+#New regression models with other combinations of fixed effects
+#Extra model 1 using felm (with control variables and only year FE)
+extramodel1_felm <- felm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                         + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | year, 
+                         data = raw_data)
+extramodel1_felm_RSE <- coeftest(extramodel1_felm, vcov = vcovHC(extramodel1_felm, type="HC1"))
+
+#Extra model 2 using felm (with control variables and only firm FE)
+extramodel2_felm <- felm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                         + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel, 
+                         data = raw_data)
+extramodel2_felm_RSE <- coeftest(extramodel2_felm, vcov = vcovHC(extramodel2_felm, type="HC1"))
+
+#Extra model 3 using felm (with control variables, industry FE and year FE)
+extramodel3_felm <- felm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                         + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | ind_final + year, 
+                         data = raw_data)
+extramodel3_felm_RSE <- coeftest(extramodel3_felm, vcov = vcovHC(extramodel3_felm, type="HC1"))
+
+
+#Extra model 4 using felm (with control variables, industry FE and firm FE)
+extramodel4_felm <- felm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                         + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | ind_final + id_in_panel, 
+                         data = raw_data)
+extramodel4_felm_RSE <- coeftest(extramodel4_felm, vcov = vcovHC(extramodel4_felm, type="HC1"))
+
+### Overview ###
+#Using huxreg 
+huxreg(extramodel1_felm_RSE, extramodel2_felm_RSE, extramodel3_felm_RSE, extramodel4_felm_RSE, 
+       statistics = c("N. obs." = "nobs", "R squared" = "r.squared"))
+
+
