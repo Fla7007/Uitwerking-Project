@@ -291,9 +291,12 @@ model5_new_feols_RSE <- feols(lnEnergy ~ lnER + lnEnergyeff + lnDa + lnSize + Ow
                       data = raw_data, 
                       vcov = "HC1")
 
+# Comparison with original models
 huxreg(model2_RSE, model2_new_RSE, model5_feols_RSE, model5_new_feols_RSE)
 ## Compared to the original models, these new models with other control variables gives better logLik and AIC values (higher logLik, lower AIC) 
+## So based on that, the new created models are prefered over the original ones.
 ## In the new created models lnER is not significantly related to lnEnergy
+
 
 ### Clustered SE ###
 # Alternative model 3 with clusterd SE
@@ -313,8 +316,13 @@ model5_feols_clustered <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge
                           data = raw_data,
                           vcov = "cluster")
 
+# Comparison with original models
+huxreg("Robust SE" = model3_feols_RSE, "Clustered SE" = model3_feols_clustered)  # lnER is not anymore significantly related to lnEnergy, the same holds for some of the control variables 
+huxreg("Robust SE" = model4_feols_RSE, "Clustered SE" = model4_feols_clustered)  # Despite other standard-errors, the significance of relationships and the estimated coefficients remains the same
+huxreg("Robust SE" = model5_feols_RSE, "Clustered SE" = model5_feols_clustered)  # Despite other standard-errors, the significance of relationships and the estimated coefficients remains the same
 
-###Misspecification of the functional form###
+
+### Misspecification of the functional form ###
 filtered_raw_data <- na.omit(raw_data)
 
 #lnER
