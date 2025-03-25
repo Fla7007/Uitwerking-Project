@@ -274,23 +274,26 @@ lasso_X <- rlasso(lnER ~ citycode + age + L + area_final + Coalratio + Oilratio 
                   data = raw_data)
 coef(lasso_Y)
 coef(lasso_X)
-# Variables with non-zero coefficients in both models: 
-# lnEnergyeff, lnDa, lnSize, Own, lnPcgdp, Concentration, LnERCOD, Lncoalcons, HighPollution, Largefirm, energy_intensive, Gasratio, TargetDummy
+## Variables with non-zero coefficients in both models: 
+## lnEnergyeff, lnDa, lnSize, Own, lnPcgdp, Concentration, LnERCOD, Lncoalcons, HighPollution, Largefirm, energy_intensive, Gasratio, TargetDummy
 
 # New model with other selection of control variables, without FE
-model_new_lm <- lm(lnEnergy ~ lnER + lnEnergyeff + lnDa + lnSize + Own + lnPcgdp + Concentration +
+model2_new <- lm(lnEnergy ~ lnER + lnEnergyeff + lnDa + lnSize + Own + lnPcgdp + Concentration +
                      LnERCOD + Lncoalcons + HighPollution + Largefirm + energy_intensive + Gasratio + TargetDummy,
                    data = raw_data)
-model_new_lm_RSE <- coeftest(model_new_lm, vcov. = vcovHC, type = "HC1")
+model2_new_RSE <- coeftest(model2_new, vcov. = vcovHC, type = "HC1")
+
 
 # New model with other selection of control variables, with all FE
-model_new_feols <- feols(lnEnergy ~ lnER + lnEnergyeff + lnDa + lnSize + Own + lnPcgdp + Concentration +
-                  LnERCOD + Lncoalcons + HighPollution + Largefirm + energy_intensive + Gasratio + TargetDummy|
-                  id_in_panel + year + ind_final,
-                data = raw_data, 
-                vcov = "HC1")
+model5_new_feols_RSE <- feols(lnEnergy ~ lnER + lnEnergyeff + lnDa + lnSize + Own + lnPcgdp + Concentration +
+                        LnERCOD + Lncoalcons + HighPollution + Largefirm + energy_intensive + Gasratio + TargetDummy|
+                        id_in_panel + year + ind_final,
+                      data = raw_data, 
+                      vcov = "HC1")
 
-
+huxreg(model2_RSE, model2_new_RSE, model5_feols_RSE, model5_new_feols_RSE)
+## Compared to the original models, these new models with other control variables gives better logLik and AIC values (higher logLik, lower AIC) 
+## In the new created models lnER is not significantly related to lnEnergy
 
 ### Clustered SE ###
 # Alternative model 3 with clusterd SE
@@ -310,11 +313,6 @@ model5_feols_clustered <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge
                           data = raw_data,
                           vcov = "cluster")
 
-# Dot-plot (very lelijk)
-library(ggplot2)
-raw_data %>% ggplot(aes(x = lnER, y = lnEnergy)) +
-  geom_point() + 
-  geom_smooth(method = "lm", se = F)
 
 ###Misspecification of the functional form###
 filtered_raw_data <- na.omit(raw_data)
