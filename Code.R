@@ -442,7 +442,7 @@ matplot(raw_data$lnAge, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*
 #Own 
 matplot(raw_data$Own, raw_data$lnEnergy, pch=1)
 
-plot(density(na.omit(raw_data$Own))
+plot(density(na.omit(raw_data$Own)))
 plot(density(na.omit(log(raw_data$Own))))
 plot(density(log(filtered_raw_data$Own)))
 plot(density(na.omit(raw_data$lnEnergy)))
