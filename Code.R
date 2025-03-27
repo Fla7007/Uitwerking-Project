@@ -316,8 +316,29 @@ coef(lasso_X)
                     
                     # Step 6: Output Results
                     summary(lasso_model)
-
-
+                    
+                    
+                    ### Code from Github Copilot
+                    # Extract the response variable (y) and predictor variables (X)
+                    NA_obs_deleted <- na.omit(raw_data)
+                    y <- NA_obs_deleted$lnEnergy
+                    X <- as.matrix(NA_obs_deleted[, -1])
+                    fixed_effects <- as.matrix(NA_obs_deleted[, c("id_in_panel", "year", "ind_final")])
+                    
+                    # Standardize the predictor variables
+                    X <- scale(X)
+                  
+                    # Combine fixed effects with the original predictors
+                    X_with_fe <- cbind(X, fixed_effects)
+                    
+                    # Perform Lasso regression with fixed effects
+                    cv_fit_fe <- cv.glmnet(X_with_fe, y, alpha = 1, nfolds = 10)
+                    best_lambda_fe <- cv_fit_fe$lambda.min
+                    lasso_model_fe <- glmnet(X_with_fe, y, alpha = 1, lambda = best_lambda_fe)
+                    
+                    # Print the coefficients of the final Lasso model with fixed effects
+                    print(coef(lasso_model_fe)) # all coef are zero
+                                 
 
 # New model with other selection of control variables, without FE
 model2_new <- lm(lnEnergy ~ lnER + lnEnergyeff + lnDa + lnSize + Own + lnPcgdp + Concentration +
