@@ -277,6 +277,48 @@ coef(lasso_X)
 ## Variables with non-zero coefficients in both models: 
 ## lnEnergyeff, lnDa, lnSize, Own, lnPcgdp, Concentration, LnERCOD, Lncoalcons, HighPollution, Largefirm, energy_intensive, Gasratio, TargetDummy
 
+
+                    ## using gamlr with fixed effects
+                    NA_obs_deleted <- na.omit(raw_data) #needed so resid_CV can be transformed to a data frame, otherwise the variables wouldn't have the same length
+                    
+                    # Define dependent variable (Y), independent variable (X), and fixed effects
+                    Y <- "lnEnergy"
+                    X <- "lnER"
+                    FE <- "id_in_panel + year + ind_final"  # Fixed effects
+                    CV <- c("citycode", "age", "L", "area_final", "Coalratio", "Oilratio", "lnEnergyeff", "lnPcca", "lnDa", "lnSize",
+                            "lnAge", "Own", "Export", "lnOpen", "Ind", "Endowment", "Rail", "lnPcgdp", "Concentration", "Lnexport", "LnERSO2", 
+                            "LnERCOD", "SO2removalrate", "reductionper", "codtarget", "Lncoalcons", "Lnpollutint2005", "Lnenergyint2005",
+                            "Lnpollutint2001", "Lnenergyint2001", "HighPollution", "Largefirm", "energy_intensive", "Lnfirmenergypre05",
+                            "Gasratio", "TargetDummy")
+                    
+                    # Step 1: Residualize Y (lnEnergy) by removing fixed effects
+                    formula_str_Y <- paste(Y, "~", paste(CV, collapse = " + "), "|", FE)
+                    resid_Y <- residuals(feols(as.formula(formula_str_Y), data = NA_obs_deleted))
+                    resid_Y <- matrix(resid_Y, ncol = 1)  # Ensure it's a matrix
+                    
+                    # Step 2: Residualize X (lnER) by removing fixed effects
+                    formula_str_X <- paste(X, "~", paste(CV, collapse = " + "), "|", FE)
+                    resid_X <- residuals(feols(as.formula(formula_str_X), data = NA_obs_deleted))
+                    resid_X <- matrix(resid_X, ncol = 1)  # Ensure it's a matrix
+                    
+                    # Step 3: Residualize Control Variables
+                    resid_CV_list <- lapply(CV, function(var) {
+                      residuals(feols(as.formula(paste(var, "~", FE)), data = NA_obs_deleted))
+                    })
+                    
+                    # Step 4: Combine X and Control Variables & Get Index
+                    resid_data <- cbind(resid_X, resid_CV)  # Ensure X is included
+                    colnames(resid_data)[1] <- X  # Assign column name to X
+                    index_X <- 1  # Since X is the first column in `resid_data`
+                    
+                    # Step 5: Apply Double LASSO Selection
+                    lasso_model <- rlassoEffects(x = resid_data, y = resid_Y, index = index_X, method = "double selection")
+                    
+                    # Step 6: Output Results
+                    summary(lasso_model)
+
+
+
 # New model with other selection of control variables, without FE
 model2_new <- lm(lnEnergy ~ lnER + lnEnergyeff + lnDa + lnSize + Own + lnPcgdp + Concentration +
                      LnERCOD + Lncoalcons + HighPollution + Largefirm + energy_intensive + Gasratio + TargetDummy,
