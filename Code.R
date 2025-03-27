@@ -326,16 +326,16 @@ huxreg("Robust SE" = model5_feols_RSE, "Clustered SE" = model5_feols_clustered) 
 filtered_raw_data <- na.omit(raw_data)
 
 #lnER
-matplot(filtered_raw_data$lnER,filtered_raw_data$lnEnergy, pch=1)   #Plots X vs. Y using points (with pch = 1 as the symbol.) Helps us visually check whether Y has a linear relationship with X or if it appears nonlinear.
+matplot(raw_data$lnER,raw_data$lnEnergy, pch=1)   #Plots X vs. Y using points (with pch = 1 as the symbol.) Helps us visually check whether Y has a linear relationship with X or if it appears nonlinear.
 
 ?matplot()
 
-plot(density(filtered_raw_data$lnER))  #Plots the density estimate of X, showing its distribution
-plot(density(filtered_raw_data$lnEnergy))   #Plots the density of Y.
+plot(density(na.omit(raw_data$lnER)))  #Plots the density estimate of X, showing its distribution
+plot(density(na.omit(raw_data$lnEnergy)))   #Plots the density of Y.
 
-matplot(filtered_raw_data$lnER,filtered_raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(lnEnergy ~ lnER, data = filtered_raw_data))  #summary(lm(Y~X)) stores the regression results in res_miss
-matplot(filtered_raw_data$lnER, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*filtered_raw_data$lnER, t="l", col=2, add=T) #Plots the fitted regression line (red) on top of the scatter plot. Coefficients[1,1] is the intercept and coefficients [2,1] is the slope. add = T ensures the regression line is added to the existing scatter plot.
+matplot(raw_data$lnER,raw_data$lnEnergy, pch=1)
+res_miss <- summary(lm(lnEnergy ~ lnER, data = raw_data))  #summary(lm(Y~X)) stores the regression results in res_miss
+matplot(raw_data$lnER, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$lnER, t="l", col=2, add=T) #Plots the fitted regression line (red) on top of the scatter plot. Coefficients[1,1] is the intercept and coefficients [2,1] is the slope. add = T ensures the regression line is added to the existing scatter plot.
 
 #lnPcca
 matplot(filtered_raw_data$lnPcca,filtered_raw_data$lnEnergy, pch=1)
@@ -381,19 +381,16 @@ matplot(filtered_raw_data$lnAge, res_miss$coefficients[1,1] + res_miss$coefficie
 
 
 #Own 
-matplot(filtered_raw_data$Own, filtered_raw_data$lnEnergy, pch=1)
+matplot(raw_data$Own, raw_data$lnEnergy, pch=1)
 
-plot(density(filtered_raw_data$Own))
+plot(density(na.omit(raw_data$Own))
+plot(density(na.omit(log(raw_data$Own))))
 plot(density(log(filtered_raw_data$Own)))
-plot(density(filtered_raw_data$lnEnergy))
+plot(density(na.omit(raw_data$lnEnergy)))
 
-matplot(filtered_raw_data$Own,filtered_raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(filtered_raw_data$lnEnergy ~ filtered_raw_data$Own))
-matplot(filtered_raw_data$Own, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*filtered_raw_data$Own, t="l", col=2, add=T)
-
-matplot(log(filtered_raw_data$Own),filtered_raw_data$lnEnergy, pch=1)
-res <- summary(lm(filtered_raw_data$lnEnergy ~ log(filtered_raw_data$Own)))
-matplot(log(filtered_raw_data$Own), res$coefficients[1,1] + res$coefficients[2,1]*log(filtered_raw_data$Own), t="l", col=2, add=T)
+matplot(raw_data$Own, raw_data$lnEnergy, pch=1)
+res_miss <- summary(lm(raw_data$lnEnergy ~ raw_data$Own))
+matplot(raw_data$Own, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$Own, t="l", col=2, add=T)
 
 
 #Export
@@ -439,19 +436,19 @@ res <- summary(lm(filtered_raw_data$lnEnergy ~ log(filtered_raw_data$Ind)))
 matplot(log(filtered_raw_data$Ind), res$coefficients[1,1] + res$coefficients[2,1]*log(filtered_raw_data$Ind), t="l", col=2, add=T)
                
 #Endowment
-matplot(filtered_raw_data$Endowment, filtered_raw_data$lnEnergy, pch=1)
+matplot(raw_data$Endowment, raw_data$lnEnergy, pch=1)
                
-plot(density(filtered_raw_data$Endowment))
-plot(density(log(filtered_raw_data$Endowment)))
-plot(density(filtered_raw_data$lnEnergy))
+plot(density(na.omit(raw_data$Endowment)))
+plot(density(log(na.omit(raw_data$Endowment))))
+plot(density(na.omit(raw_data$lnEnergy)))
                
-matplot(filtered_raw_data$Endowment,filtered_raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(filtered_raw_data$lnEnergy ~ filtered_raw_data$Endowment))
-matplot(filtered_raw_data$Endowment, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*filtered_raw_data$Endowment, t="l", col=2, add=T)
+matplot(raw_data$Endowment, raw_data$lnEnergy, pch=1)
+res_miss <- summary(lm(raw_data$lnEnergy ~ raw_data$Endowment))
+matplot(raw_data$Endowment, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$Endowment, t="l", col=2, add=T)
                
-matplot(log(filtered_raw_data$Endowment),filtered_raw_data$lnEnergy, pch=1)
-res <- summary(lm(filtered_raw_data$lnEnergy ~ log(filtered_raw_data$Endowment)))
-matplot(log(filtered_raw_data$Endowment), res$coefficients[1,1] + res$coefficients[2,1]*log(filtered_raw_data$Endowment), t="l", col=2, add=T)
+matplot(log(raw_data$Endowment),raw_data$lnEnergy, pch=1)
+res <- summary(lm(raw_data$lnEnergy ~ log(raw_data$Endowment)))
+matplot(log(raw_data$Endowment), res$coefficients[1,1] + res$coefficients[2,1]*log(raw_data$Endowment), t="l", col=2, add=T)
 #De code met log() geeft error.               
                
 #Rail
