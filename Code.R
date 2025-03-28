@@ -595,9 +595,24 @@ extramodel4_feols_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge 
                           + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + ind_final, 
                           data = raw_data,
                           vcov = "HC1")
-### Overview ###
+# Overview #
 #Using huxreg 
 huxreg(extramodel1_feols_RSE, extramodel2_feols_RSE, extramodel3_feols_RSE, extramodel4_feols_RSE, 
        statistics = c("N. obs." = "nobs", "R squared" = "r.squared"))
 
+### Specification curve analysis ###
+Y <- "lnEnergy"
+X <- "lnER"
+FE <- "id_in_panel + year + ind_final"  # Fixed effects
+CV <- c("lnPcca", "lnDa", "lnSize", "lnAge", "Own", "Export", "lnOpen", "Ind", "Endowment", "Rail", "lnPcgdp", "Concentration")
 
+
+library(speccurvieR)
+sca(y = Y, 
+    x = X,
+    controls = CV,
+    data = raw_data,
+    family = "linear",
+    fixedEffects = FE, 
+    parallel = TRUE, 
+    workers = 10)
