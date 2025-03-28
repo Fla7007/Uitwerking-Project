@@ -278,7 +278,7 @@ coef(lasso_X)
 ## lnEnergyeff, lnDa, lnSize, Own, lnPcgdp, Concentration, LnERCOD, Lncoalcons, HighPollution, Largefirm, energy_intensive, Gasratio, TargetDummy
 
 
-                    ## using gamlr with fixed effects
+                    ## using rlasso with fixed effects
                     NA_obs_deleted <- na.omit(raw_data) #needed so resid_CV can be transformed to a data frame, otherwise the variables wouldn't have the same length
                     
                     # Define dependent variable (Y), independent variable (X), and fixed effects
@@ -294,28 +294,25 @@ coef(lasso_X)
                     # Step 1: Residualize Y (lnEnergy) by removing fixed effects
                     formula_str_Y <- paste(Y, "~", paste(CV, collapse = " + "), "|", FE)
                     resid_Y <- residuals(feols(as.formula(formula_str_Y), data = NA_obs_deleted))
-                    resid_Y <- matrix(resid_Y, ncol = 1)  # Ensure it's a matrix
                     
                     # Step 2: Residualize X (lnER) by removing fixed effects
                     formula_str_X <- paste(X, "~", paste(CV, collapse = " + "), "|", FE)
                     resid_X <- residuals(feols(as.formula(formula_str_X), data = NA_obs_deleted))
-                    resid_X <- matrix(resid_X, ncol = 1)  # Ensure it's a matrix
-                    
+                  
                     # Step 3: Residualize Control Variables
-                    resid_CV_list <- lapply(CV, function(var) {
+                    resid_CV <- lapply(CV, function(var) {
                       residuals(feols(as.formula(paste(var, "~", FE)), data = NA_obs_deleted))
                     })
+                    resid_CV_df <- do.call(cbind, resid_CV)  # Convert list to matrix
+                    resid_CV_df <- as.data.frame(resid_CV_df)  # Ensure it's a dataframe
+                    colnames(resid_CV_df) <- CV  # Assign original control variable names
                     
-                    # Step 4: Combine X and Control Variables & Get Index
-                    resid_data <- cbind(resid_X, resid_CV)  # Ensure X is included
-                    colnames(resid_data)[1] <- X  # Assign column name to X
-                    index_X <- 1  # Since X is the first column in `resid_data`
                     
-                    # Step 5: Apply Double LASSO Selection
-                    lasso_model <- rlassoEffects(x = resid_data, y = resid_Y, index = index_X, method = "double selection")
+                    # Step 4: Lasso models
+                    lasso_Y <- rlasso(resid_Y ~ resid_X + ., data = resid_CV_df) #all coef are zero
+                    lasso_X <- rlasso(resid_X ~ ., data = resid_CV_df) #all coef are zero 
                     
-                    # Step 6: Output Results
-                    summary(lasso_model)
+                    
                     
                     
                     ### Code from Github Copilot
