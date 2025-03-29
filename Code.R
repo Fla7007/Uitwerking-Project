@@ -292,28 +292,30 @@ coef(lasso_X)
                             "Gasratio", "TargetDummy")
                     
                     # Step 1: Residualize Y (lnEnergy) by removing fixed effects
-                    formula_str_Y <- paste(Y, "~", paste(CV, collapse = " + "), "|", FE)
+                    formula_str_Y <- paste(Y, "~ 1 |", FE)
                     resid_Y <- residuals(feols(as.formula(formula_str_Y), data = NA_obs_deleted))
                     
                     # Step 2: Residualize X (lnER) by removing fixed effects
-                    formula_str_X <- paste(X, "~", paste(CV, collapse = " + "), "|", FE)
+                    formula_str_X <- paste(X, "~ 1 |", FE)
                     resid_X <- residuals(feols(as.formula(formula_str_X), data = NA_obs_deleted))
                   
                     # Step 3: Residualize Control Variables
                     resid_CV <- lapply(CV, function(var) {
-                      residuals(feols(as.formula(paste(var, "~", FE)), data = NA_obs_deleted))
+                      residuals(feols(as.formula(paste(var, "~ 1 |", FE)), data = NA_obs_deleted))
                     })
-                    resid_CV_df <- do.call(cbind, resid_CV)  # Convert list to matrix
-                    resid_CV_df <- as.data.frame(resid_CV_df)  # Ensure it's a dataframe
-                    colnames(resid_CV_df) <- CV  # Assign original control variable names
+                    resid_CV <- do.call(cbind, resid_CV)  # Convert list to matrix
+                    colnames(resid_CV) <- CV  # Assign original control variable names
                     
                     
                     # Step 4: Lasso models
-                    lasso_Y <- rlasso(resid_Y ~ resid_X + ., data = resid_CV_df) #all coef are zero
-                    lasso_X <- rlasso(resid_X ~ ., data = resid_CV_df) #all coef are zero 
+                    lasso_Y <- rlasso(resid_Y ~ resid_X + resid_CV)
+                    lasso_X <- rlasso(resid_X ~ resid_CV)
                     
+                    coef(lasso_X) #non-zero coef: lnAge, Ind, Endowment, Rail, lnPcgdp, Lnexport, LnERSO2, LnERCOD, SO2removalrate, reductionper
+                    coef(lasso_Y) #non-zero coef: area_final, Coalratio, lnEnergyeff, lnPcca, lnSize, lnAge, Ind, Lnexport, SO2removalrate, Lncoalcons, Lnenergyint2005, Largefirm, Gasratio
+                    #non-zero coef in both: lnAge, Ind, Lnexport, SO2removalrate  
                     
-                    
+                   
                     
                     ### Code from Github Copilot
                     # Extract the response variable (y) and predictor variables (X)
