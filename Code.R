@@ -610,11 +610,11 @@ CV <- c("lnPcca", "lnDa", "lnSize", "lnAge", "Own", "Export", "lnOpen", "Ind", "
 
 
 library(speccurvieR)
-sca(y = Y, 
-    x = X,
-    controls = CV,
-    data = raw_data,
-    family = "linear",
-    fixedEffects = FE, 
-    parallel = TRUE, 
-    workers = 10)
+SCA <- sca(y = Y, 
+        x = X,
+        controls = CV,
+        data = raw_data,
+        family = "linear",
+        fixedEffects = FE, 
+        parallel = TRUE, 
+        workers = 11) #Unable to run this code: several warnings and an error "cannot allocate vector of size 1.0 Mb". Besides, my computer needs 2 days to run it.
