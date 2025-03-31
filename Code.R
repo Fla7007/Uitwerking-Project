@@ -618,3 +618,17 @@ SCA <- sca(y = Y,
         fixedEffects = FE, 
         parallel = TRUE, 
         workers = 11) #Unable to run this code: several warnings and an error "cannot allocate vector of size 1.0 Mb". Besides, my computer needs 2 days to run it.
+
+library(specr)
+library(future)
+specs <- setup(data = raw_data, 
+                y = Y, 
+                x = X, 
+                model = "lm",
+                controls = CV,
+                add_to_formula = FE) #You can use "add_to_formula" also when you have multiple fixed effects
+
+plot(specs)
+plan(multisession, workers = availableCores() - 1)
+results <- specr(specs)
+plot(results)
