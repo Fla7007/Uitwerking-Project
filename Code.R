@@ -608,7 +608,7 @@ X <- "lnER"
 FE <- "id_in_panel + year + ind_final"  # Fixed effects
 CV <- c("lnPcca", "lnDa", "lnSize", "lnAge", "Own", "Export", "lnOpen", "Ind", "Endowment", "Rail", "lnPcgdp", "Concentration")
 
-
+#using speccurvie
 library(speccurvieR)
 SCA <- sca(y = Y, 
         x = X,
@@ -619,23 +619,66 @@ SCA <- sca(y = Y,
         parallel = TRUE, 
         workers = 11) #Unable to run this code: several warnings and an error "cannot allocate vector of size 1.0 Mb". Besides, my computer needs 2 days to run it.
 
-
+#using code from class
 library(fixest)
 library(specr)
+library(furrr)
 
-test_formula <- function(formula,data) {
-  formula <-as.formula(paste0(formula, "|", FE)) # fixed effects
-  feols(formula,data)
+## Taking a random sample
+data_NAY <- raw_data %>% drop_na(lnEnergy) #remove NA from the Y variable
+sample_data <- data_NAY %>%
+  group_by(ind_final, id_in_panel) %>%  # Group by industry and firm
+  filter(n_distinct(year) > 1) %>%  # Keep only firms with data across multiple years (if applicable)
+  sample_frac(0.2) %>%  # Take a random sample of 20% of the firms for each industry
+  ungroup()  # Remove the grouping to return the full data
+
+
+plan(strategy = multisession, workers = 6) #parallellisation
+
+feols_formula <- function(formula, data) {
+  formula <- as.formula(paste0(formula, " | ", FE))
+  fixest::feols(formula, data)
 }
-specs <- setup(
-  data = raw_data,
+
+specs1 <- setup(
+  data = sample_data,
   y = Y,
   x = X,
-  model = 'test_formula',
-  controls = CV
+  model = "feols_formula",
+  controls = CV[1:4],
+  add_to_formula = "Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration"
 )
 
-plot(specs)
-results <- specr(specs) #At least 90.710 observations were removed because of NA, takes several hours to run
+specs2 <- setup(
+  data = sample_data,
+  y = Y,
+  x = X,
+  model = "feols_formula",
+  controls = CV[5:8],
+  add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Endowment + Rail + lnPcgdp + Concentration"
+)
+
+specs3 <- setup(
+  data = sample_data,
+  y = Y,
+  x = X,
+  model = "feols_formula",
+  controls = CV[9:12],
+  add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Own + Export + lnOpen + Ind"
+)
+
+plot(specs1)
+plot(specs2)
+plot(specs3)
+
+opts <- furrr_options(
+  globals = list(feols_formula = feols_formula, FE = FE),
+  seed = TRUE
+)
+
+results1 <- specr(specs1, .options = opts, .progress = TRUE)
+results2 <- specr(specs2, .options = opts, .progress = TRUE)
+results3 <- specr(specs3, .options = opts, .progress = TRUE)
+#IT TAKES FOREVER TO RUN THESE RESULTS
 
 plot(results)
