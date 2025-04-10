@@ -619,16 +619,23 @@ SCA <- sca(y = Y,
         parallel = TRUE, 
         workers = 11) #Unable to run this code: several warnings and an error "cannot allocate vector of size 1.0 Mb". Besides, my computer needs 2 days to run it.
 
+
+library(fixest)
 library(specr)
-library(future)
-specs <- setup(data = raw_data, 
-                y = Y, 
-                x = X, 
-                model = "lm",
-                controls = CV,
-                add_to_formula = FE) #You can use "add_to_formula" also when you have multiple fixed effects
+
+test_formula <- function(formula,data) {
+  formula <-as.formula(paste0(formula, "|", FE)) # fixed effects
+  feols(formula,data)
+}
+specs <- setup(
+  data = raw_data,
+  y = Y,
+  x = X,
+  model = 'test_formula',
+  controls = CV
+)
 
 plot(specs)
-plan(multisession, workers = availableCores() - 1)
-results <- specr(specs)
+results <- specr(specs) #At least 90.710 observations were removed because of NA, takes several hours to run
+
 plot(results)
