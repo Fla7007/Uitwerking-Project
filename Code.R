@@ -692,6 +692,14 @@ feols_formula <- function(formula, data) {
   fixest::feols(formula, data)
 }
 
+specsfeols <- setup(
+  data = sample_data,
+  y = Y,
+  x = X,
+  model = "feols_formula",
+  controls = CV
+)
+
 specsfeols1 <- setup(
   data = sample_data,
   y = Y,
@@ -719,6 +727,7 @@ specsfeols3 <- setup(
   add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Own + Export + lnOpen + Ind"
 )
 
+plot(specsfeols)
 plot(specsfeols1)
 plot(specsfeols2)
 plot(specsfeols3)
@@ -726,11 +735,14 @@ plot(specsfeols3)
 opts <- furrr_options(
   globals = list(feols_formula = feols_formula, FE = FE),
   seed = TRUE
-)
+) #needed since we use parallelisation
 
+resultsfeols <- specr(specsfeols, .options = opts, .progress = TRUE) #takes +/- 2h to run
 resultsfeols1 <- specr(specsfeols1, .options = opts, .progress = TRUE)
 resultsfeols2 <- specr(specsfeols2, .options = opts, .progress = TRUE)
 resultsfeols3 <- specr(specsfeols3, .options = opts, .progress = TRUE)
-#IT TAKES FOREVER TO RUN THESE RESULTS
 
-plot(results)
+plot(resultsfeols)
+plot(resultsfeols1)
+plot(resultsfeols2)
+plot(resultsfeols3)
