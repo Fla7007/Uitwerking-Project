@@ -671,6 +671,21 @@ plot(resultslm)
 plot(resultslm1)
 plot(resultslm2)
 
+###LM (with all CV and FE) --> no sure if this is right since we use lm and try to include FE
+specslmFE <- setup(
+  data = sample_data,
+  y = Y,
+  x = X,
+  model = "lm",
+  controls = c("id_in_panel", "year", "ind_final"),
+  add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration") #8 different models
+
+plot(specslmFE)
+
+resultslmFE <- specr(specslmFE, .progress = TRUE)
+
+plot(resultslmFE)
+
 ###FEOLS
 feols_formula <- function(formula, data) {
   formula <- as.formula(paste0(formula, " | ", FE))
