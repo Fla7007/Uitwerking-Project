@@ -691,13 +691,11 @@ plot(resultslmFE)
 #FEOLS#
 feols_formula <- function(formula, data) {
   formula <- as.formula(paste0(formula, " | ", FE))
-  fixest::feols(formula, data)
-}   #setting needed formula with feols (FE always included)
+  fixest::feols(formula, data)}   #setting needed formula with feols (FE always included)
 
 opts <- furrr_options(
   globals = list(feols_formula = feols_formula, FE = FE),
-  seed = TRUE
-) #needed since we use parallelisation
+  seed = TRUE) #needed since we use parallelisation
 
 #All possible combinations of the 12 selected control variables 
 specsfeols <- setup(
@@ -749,3 +747,27 @@ specsfeols3 <- setup(
 plot(specsfeols3)
 resultsfeols3 <- specr(specsfeols3, .options = opts, .progress = TRUE)
 plot(resultsfeols3)
+
+#Different models and SE# (NOT RUNNED YET)
+feols_formula <- function(formula, data) {
+  formula <- as.formula(paste0(formula, " | ", FE))
+  fixest::feols(formula, data)} #setting needed formula with feols (FE always included)
+
+feols_formula_clu <- function(formula, data) {
+  formula <- as.formula(paste0(formula, " | ", FE))
+  fixest::feols(formula, data, vcov = "cluster")} #setting needed formula with feols and clustere SE (FE always included)
+
+opts2 <- furrr_options(
+  globals = list(feols_formula = feols_formula, FE = FE, feols_formula_clu = feols_formula_clu),
+  seed = TRUE) #needed since we use parallelisation
+
+specsdifmodels <- setup(
+  data = sample_data,
+  y = Y,
+  x = X,
+  model = c("lm", "feols_formula", "feols_formula_clu"),
+  control = CV) #12288 different models
+
+plot(specsdifmodels)
+resultsdifmodels <- specr(specsdifmodels, .options = opts2, .progress = TRUE)
+plot(resultsdifmodels)
