@@ -635,12 +635,49 @@ sample_data <- data_NAY %>%
 
 plan(strategy = multisession, workers = 6) #parallellisation
 
+###LM (without FE)
+specslm <- setup(
+  data = sample_data,
+  y = Y,
+  x = X,
+  model = "lm",
+  controls = CV) #4096 different models
+
+specslm1 <- setup(
+  data = sample_data,
+  y = Y,
+  x = X,
+  model = "lm",
+  controls = CV[1:6],
+  add_to_formula = "lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration") #64 different models
+
+specslm2 <- setup(
+  data = sample_data,
+  y = Y,
+  x = X,
+  model = "lm",
+  controls = CV[7:12],
+  add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Own + Export") #64 different models
+
+plot(specslm)
+plot(specslm1)
+plot(specslm2)
+
+resultslm <- specr(specslm, .progress = TRUE)
+resultslm1 <- specr(specslm1, .progress = TRUE)
+resultslm2 <- specr(specslm2, .progress = TRUE)
+
+plot(resultslm)
+plot(resultslm1)
+plot(resultslm2)
+
+###FEOLS
 feols_formula <- function(formula, data) {
   formula <- as.formula(paste0(formula, " | ", FE))
   fixest::feols(formula, data)
 }
 
-specs1 <- setup(
+specsfeols1 <- setup(
   data = sample_data,
   y = Y,
   x = X,
@@ -649,7 +686,7 @@ specs1 <- setup(
   add_to_formula = "Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration"
 )
 
-specs2 <- setup(
+specsfeols2 <- setup(
   data = sample_data,
   y = Y,
   x = X,
@@ -658,7 +695,7 @@ specs2 <- setup(
   add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Endowment + Rail + lnPcgdp + Concentration"
 )
 
-specs3 <- setup(
+specsfeols3 <- setup(
   data = sample_data,
   y = Y,
   x = X,
@@ -667,18 +704,18 @@ specs3 <- setup(
   add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Own + Export + lnOpen + Ind"
 )
 
-plot(specs1)
-plot(specs2)
-plot(specs3)
+plot(specsfeols1)
+plot(specsfeols2)
+plot(specsfeols3)
 
 opts <- furrr_options(
   globals = list(feols_formula = feols_formula, FE = FE),
   seed = TRUE
 )
 
-results1 <- specr(specs1, .options = opts, .progress = TRUE)
-results2 <- specr(specs2, .options = opts, .progress = TRUE)
-results3 <- specr(specs3, .options = opts, .progress = TRUE)
+resultsfeols1 <- specr(specsfeols1, .options = opts, .progress = TRUE)
+resultsfeols2 <- specr(specsfeols2, .options = opts, .progress = TRUE)
+resultsfeols3 <- specr(specsfeols3, .options = opts, .progress = TRUE)
 #IT TAKES FOREVER TO RUN THESE RESULTS
 
 plot(results)
