@@ -649,6 +649,32 @@ plot(specslm)
 resultslm <- specr(specslm, .progress = TRUE)
 plot(resultslm)
 
+    ###EXTRA: zooming in on the extremes
+    bottom <- resultslm$data %>% arrange(estimate) %>% slice(1:200) %>% mutate(extreme = "Most Negative") #5% of the total models with the lowest estimate
+    top <- resultslm$data %>% arrange(desc(estimate)) %>% slice(1:200) %>% mutate(extreme = "Most Positive") #5% of the total models with the highest estimate
+    extremes <- bind_rows(bottom, top)
+    
+    freqs <- extremes %>%
+      separate_rows(controls, sep = "\\+") %>% # Split 'controls' into multiple rows
+      mutate(controls = trimws(controls)) %>% # Trim whitespace
+      count(extreme, controls) %>% # Count occurrences
+      group_by(extreme) %>% 
+      mutate(inclusion_rate = n / 200) %>% # Calculate inclusion rate
+      ungroup()
+    
+    ggplot(freqs, aes(x = reorder(controls, inclusion_rate), y = inclusion_rate, fill = extreme)) +
+      geom_col(position = "dodge") +
+      coord_flip() +
+      labs(title = paste("Control Inclusion in Top/Bottom", 200, "Specs"),
+           x = "Control", y = "Inclusion Rate") +
+      theme_minimal()
+    #CONCLUSION: 
+      ## lnPcca is always included in the most negative models and never in the most positive ones => suggests a negative polarising effect 
+      ## lnPcgdp is often included in the most positive models and never in the most negative ones => suggests a positive polarising effect
+      ## Endowment and Concentration are included in both groups. However, they are more present in the positive models than in the negative ones
+      ## lnSize and lnOpen are only included in the most positive models, but in less than 50%
+      ## All other control variables are equaly present in both groups
+
 #Possible combinations of the first six CV with the last six CV always included
 specslm1 <- setup(
   data = sample_data,
