@@ -436,6 +436,14 @@ matplot(raw_data$lnDa,raw_data$lnEnergy, pch=1)
 res_miss <- summary(lm(lnEnergy ~ lnDa, data = raw_data))
 matplot(raw_data$lnDa, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$lnDa, t="l", col=2, add=T)
 
+matplot(exp(raw_data$lnDa), raw_data$lnEnergy, pch = 1)
+plot(density(na.omit(exp(raw_data$lnDa)))) 
+plot(density(na.omit(raw_data$lnEnergy)))
+matplot(exp(raw_data$lnDa),raw_data$lnEnergy, pch=1)
+res_miss <- summary(lm(lnEnergy ~ exp(lnDa), data = raw_data))  
+matplot(exp(raw_data$lnDa), res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*exp(raw_data$lnDa), t="l", col=2, add=T)
+
+
 
 #lnSize 
 matplot(raw_data$lnSize,raw_data$lnEnergy, pch=1)
@@ -446,6 +454,13 @@ plot(density(na.omit(raw_data$lnEnergy)))
 matplot(raw_data$lnSize,raw_data$lnEnergy, pch=1)
 res_miss <- summary(lm(lnEnergy ~ lnSize, data = raw_data))
 matplot(raw_data$lnSize, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$lnSize, t="l", col=2, add=T)
+
+matplot(exp(raw_data$lnSize), raw_data$lnEnergy, pch = 1)
+plot(density(na.omit(exp(raw_data$lnSize)))) 
+plot(density(na.omit(raw_data$lnEnergy)))
+matplot(exp(raw_data$lnSize),raw_data$lnEnergy, pch=1)
+res_miss <- summary(lm(lnEnergy ~ exp(lnSize), data = raw_data))  
+matplot(exp(raw_data$lnSize), res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*exp(raw_data$lnSize), t="l", col=2, add=T)
 
 
 #lnAge 
@@ -458,13 +473,20 @@ matplot(raw_data$lnAge,raw_data$lnEnergy, pch=1)
 res_miss <- summary(lm(lnEnergy ~ lnAge, data = raw_data))
 matplot(raw_data$lnAge, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$lnAge, t="l", col=2, add=T)
 
+matplot(exp(raw_data$lnAge), raw_data$lnEnergy, pch = 1)
+plot(density(na.omit(exp(raw_data$lnAge)))) 
+plot(density(na.omit(raw_data$lnEnergy)))
+matplot(exp(raw_data$lnAge),raw_data$lnEnergy, pch=1)
+res_miss <- summary(lm(lnEnergy ~ exp(lnAge), data = raw_data))  
+matplot(exp(raw_data$lnAge), res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*exp(raw_data$lnAge), t="l", col=2, add=T)
+
 
 #Own 
 matplot(raw_data$Own, raw_data$lnEnergy, pch=1)
 
 plot(density(na.omit(raw_data$Own)))
 plot(density(na.omit(log(raw_data$Own))))
-plot(density(log(filtered_raw_data$Own)))
+plot(density(log(na.omit(raw_data$Own))))
 plot(density(na.omit(raw_data$lnEnergy)))
 
 matplot(raw_data$Own, raw_data$lnEnergy, pch=1)
@@ -497,6 +519,13 @@ plot(density(na.omit(raw_data$lnEnergy)))
 matplot(raw_data$lnOpen,raw_data$lnEnergy, pch=1)
 res_miss <- summary(lm(raw_data$lnEnergy ~ raw_data$lnOpen))
 matplot(raw_data$lnOpen, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$lnOpen, t="l", col=2, add=T)
+
+matplot(exp(raw_data$lnOpen), raw_data$lnEnergy, pch = 1)
+plot(density(na.omit(exp(raw_data$lnOpen)))) 
+plot(density(na.omit(raw_data$lnEnergy)))
+matplot(exp(raw_data$lnOpen),raw_data$lnEnergy, pch=1)
+res_miss <- summary(lm(lnEnergy ~ exp(lnOpen), data = raw_data))  
+matplot(exp(raw_data$lnOpen), res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*exp(raw_data$lnOpen), t="l", col=2, add=T)
 
   
 #Ind 
@@ -555,6 +584,14 @@ plot(density(na.omit(raw_data$lnEnergy)))
 matplot(raw_data$lnPcgdp,raw_data$lnEnergy, pch=1)               
 res_miss <- summary(lm(lnEnergy ~ lnPcgdp, data = raw_data))
 matplot(raw_data$lnPcgdp, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$lnPcgdp, t="l", col=2, add=T)
+
+matplot(exp(raw_data$lnPcgdp), raw_data$lnEnergy, pch = 1)
+plot(density(na.omit(exp(raw_data$lnPcgdp)))) 
+plot(density(na.omit(raw_data$lnEnergy)))
+matplot(exp(raw_data$lnPcgdp),raw_data$lnEnergy, pch=1)
+res_miss <- summary(lm(lnEnergy ~ exp(lnPcgdp), data = raw_data))  
+matplot(exp(raw_data$lnPcgdp), res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*exp(raw_data$lnPcgdp), t="l", col=2, add=T)
+
                
 #Concentration
 matplot(raw_data$Concentration, raw_data$lnEnergy, pch=1)
