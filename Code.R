@@ -797,3 +797,43 @@ specsdifmodels <- setup(
 plot(specsdifmodels)
 resultsdifmodels <- specr(specsdifmodels, .options = opts2, .progress = TRUE)
 plot(resultsdifmodels)
+
+### Extra tables ###
+#Table 3
+model_coal <- feols(Lncoalcons ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                          + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                          data = raw_data,
+                          vcov = "HC1")
+model_SO2 <- feols(lnEnergy ~ LnERSO2 + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                    + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                    data = raw_data,
+                    vcov = "HC1")
+model_COD <- feols(lnEnergy ~ LnERCOD + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                   + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                   data = raw_data,
+                   vcov = "HC1")
+model_SO2removalrate <- feols(lnEnergy ~ SO2removalrate + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                         + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                         data = raw_data,
+                         vcov = "HC1")
+model_lnexport <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Lnexport
+                    + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                    data = raw_data,
+                    vcov = "HC1")
+model_extraFE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final + citycode*ind_final + year*ind_final, 
+                        data = raw_data,
+                        vcov = "HC1")
+
+lagged_data <- raw_data %>%
+  arrange(id_in_panel, year) %>%                #orders observations within a panel based on year
+  group_by(id_in_panel) %>%                     #grouping by panel so lag is calculated within a panel
+  mutate(lag_lnER = dplyr::lag(lnER, 1)) %>%    #create 1-period lag
+  ungroup()
+ 
+model_laggedER <- feols(lnEnergy ~ lag_lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                    + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                    data = lagged_data,
+                    vcov = "HC1")
+
+Table3 <- huxreg(model_coal, model_SO2, model_COD, model_SO2removalrate, model_lnexport, model_extraFE, model_laggedER)
