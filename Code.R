@@ -645,7 +645,7 @@ X <- "lnER"
 FE <- "id_in_panel + year + ind_final"  # Fixed effects
 CV <- c("lnPcca", "lnDa", "lnSize", "lnAge", "Own", "Export", "lnOpen", "Ind", "Endowment", "Rail", "lnPcgdp", "Concentration")
 
-#using speccurvie
+# Using speccurvie (DO NOT RUN THIS CODE)
 library(speccurvieR)
 SCA <- sca(y = Y, 
         x = X,
@@ -654,14 +654,15 @@ SCA <- sca(y = Y,
         family = "linear",
         fixedEffects = FE, 
         parallel = TRUE, 
-        workers = 11) #Unable to run this code: several warnings and an error "cannot allocate vector of size 1.0 Mb". Besides, my computer needs 2 days to run it.
+        workers = 11) 
+## Unable to run this code: several warnings and an error "cannot allocate vector of size 1.0 Mb". Besides, my computer needs 2 days to run it.
 
-#using code from class
+# Using specr with parallelisation
 library(fixest)
 library(specr)
 library(furrr)
 
-## Taking a random sample
+#Taking a random sample#
 data_NAY <- raw_data %>% drop_na(lnEnergy) #remove NA from the Y variable
 sample_data <- data_NAY %>%
   group_by(ind_final, id_in_panel) %>%  # Group by industry and firm
@@ -669,10 +670,11 @@ sample_data <- data_NAY %>%
   sample_frac(0.2) %>%  # Take a random sample of 20% of the firms for each industry
   ungroup()  # Remove the grouping to return the full data
 
+#Setting parallelisation#
+plan(strategy = multisession, workers = 6)
 
-plan(strategy = multisession, workers = 6) #parallellisation
-
-###LM (without FE)
+#LM (without FE)#
+#All possible combinations of the 12 selected control variables
 specslm <- setup(
   data = sample_data,
   y = Y,
@@ -680,6 +682,37 @@ specslm <- setup(
   model = "lm",
   controls = CV) #4096 different models
 
+plot(specslm)
+resultslm <- specr(specslm, .progress = TRUE)
+plot(resultslm)
+
+    ###EXTRA: zooming in on the extremes
+    bottom <- resultslm$data %>% arrange(estimate) %>% slice(1:200) %>% mutate(extreme = "Most Negative") #5% of the total models with the lowest estimate
+    top <- resultslm$data %>% arrange(desc(estimate)) %>% slice(1:200) %>% mutate(extreme = "Most Positive") #5% of the total models with the highest estimate
+    extremes <- bind_rows(bottom, top)
+    
+    freqs <- extremes %>%
+      separate_rows(controls, sep = "\\+") %>% # Split 'controls' into multiple rows
+      mutate(controls = trimws(controls)) %>% # Trim whitespace
+      count(extreme, controls) %>% # Count occurrences
+      group_by(extreme) %>% 
+      mutate(inclusion_rate = n / 200) %>% # Calculate inclusion rate
+      ungroup()
+    
+    ggplot(freqs, aes(x = reorder(controls, inclusion_rate), y = inclusion_rate, fill = extreme)) +
+      geom_col(position = "dodge") +
+      coord_flip() +
+      labs(title = paste("Control Inclusion in Top/Bottom", 200, "Specs"),
+           x = "Control", y = "Inclusion Rate") +
+      theme_minimal()
+    #CONCLUSION: 
+      ## lnPcca is always included in the most negative models and never in the most positive ones => suggests a negative polarising effect 
+      ## lnPcgdp is often included in the most positive models and never in the most negative ones => suggests a positive polarising effect
+      ## Endowment and Concentration are included in both groups. However, they are more present in the positive models than in the negative ones
+      ## lnSize and lnOpen are only included in the most positive models, but in less than 50%
+      ## All other control variables are equaly present in both groups
+
+#Possible combinations of the first six CV with the last six CV always included
 specslm1 <- setup(
   data = sample_data,
   y = Y,
@@ -688,6 +721,11 @@ specslm1 <- setup(
   controls = CV[1:6],
   add_to_formula = "lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration") #64 different models
 
+plot(specslm1)
+resultslm1 <- specr(specslm1, .progress = TRUE)
+plot(resultslm1)
+
+#Possible combinations of the last six CV with the first six CV always included
 specslm2 <- setup(
   data = sample_data,
   y = Y,
@@ -696,19 +734,11 @@ specslm2 <- setup(
   controls = CV[7:12],
   add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Own + Export") #64 different models
 
-plot(specslm)
-plot(specslm1)
 plot(specslm2)
-
-resultslm <- specr(specslm, .progress = TRUE)
-resultslm1 <- specr(specslm1, .progress = TRUE)
 resultslm2 <- specr(specslm2, .progress = TRUE)
-
-plot(resultslm)
-plot(resultslm1)
 plot(resultslm2)
 
-###LM (with all CV and FE) --> no sure if this is right since we use lm and try to include FE
+#LM (with all CV and FE)# --> no sure if this is right since we use lm and try to include FE
 specslmFE <- setup(
   data = sample_data,
   y = Y,
@@ -718,56 +748,89 @@ specslmFE <- setup(
   add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration") #8 different models
 
 plot(specslmFE)
-
 resultslmFE <- specr(specslmFE, .progress = TRUE)
-
 plot(resultslmFE)
 
-###FEOLS
+#FEOLS#
 feols_formula <- function(formula, data) {
   formula <- as.formula(paste0(formula, " | ", FE))
-  fixest::feols(formula, data)
-}
+  fixest::feols(formula, data)}   #setting needed formula with feols (FE always included)
 
+opts <- furrr_options(
+  globals = list(feols_formula = feols_formula, FE = FE),
+  seed = TRUE) #needed since we use parallelisation
+
+#All possible combinations of the 12 selected control variables 
+specsfeols <- setup(
+  data = sample_data,
+  y = Y,
+  x = X,
+  model = "feols_formula",
+  controls = CV) #4096 different models
+
+plot(specsfeols)
+resultsfeols <- specr(specsfeols, .options = opts, .progress = TRUE) #takes +/- 2h to run
+plot(resultsfeols)
+
+#Possible combinations of the first four CV with the last eight CV always included
 specsfeols1 <- setup(
   data = sample_data,
   y = Y,
   x = X,
   model = "feols_formula",
   controls = CV[1:4],
-  add_to_formula = "Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration"
-)
+  add_to_formula = "Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration") #16 different models
 
+plot(specsfeols1)
+resultsfeols1 <- specr(specsfeols1, .options = opts, .progress = TRUE)
+plot(resultsfeols1)
+
+#Possible combinations of the middle four CV with the first and last four CV always included
 specsfeols2 <- setup(
   data = sample_data,
   y = Y,
   x = X,
   model = "feols_formula",
   controls = CV[5:8],
-  add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Endowment + Rail + lnPcgdp + Concentration"
-)
+  add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Endowment + Rail + lnPcgdp + Concentration") #16 different models
 
+plot(specsfeols2)
+resultsfeols2 <- specr(specsfeols2, .options = opts, .progress = TRUE)
+plot(resultsfeols2)
+
+#Possible combinations of the last four CV with the first eight CV always included
 specsfeols3 <- setup(
   data = sample_data,
   y = Y,
   x = X,
   model = "feols_formula",
   controls = CV[9:12],
-  add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Own + Export + lnOpen + Ind"
-)
+  add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Own + Export + lnOpen + Ind") #16 different models
 
-plot(specsfeols1)
-plot(specsfeols2)
 plot(specsfeols3)
-
-opts <- furrr_options(
-  globals = list(feols_formula = feols_formula, FE = FE),
-  seed = TRUE
-)
-
-resultsfeols1 <- specr(specsfeols1, .options = opts, .progress = TRUE)
-resultsfeols2 <- specr(specsfeols2, .options = opts, .progress = TRUE)
 resultsfeols3 <- specr(specsfeols3, .options = opts, .progress = TRUE)
-#IT TAKES FOREVER TO RUN THESE RESULTS
+plot(resultsfeols3)
 
-plot(results)
+#Different models and SE# (NOT RUNNED YET)
+feols_formula <- function(formula, data) {
+  formula <- as.formula(paste0(formula, " | ", FE))
+  fixest::feols(formula, data)} #setting needed formula with feols (FE always included)
+
+feols_formula_clu <- function(formula, data) {
+  formula <- as.formula(paste0(formula, " | ", FE))
+  fixest::feols(formula, data, vcov = "cluster")} #setting needed formula with feols and clustere SE (FE always included)
+
+opts2 <- furrr_options(
+  globals = list(feols_formula = feols_formula, FE = FE, feols_formula_clu = feols_formula_clu),
+  seed = TRUE) #needed since we use parallelisation
+
+specsdifmodels <- setup(
+  data = sample_data,
+  y = Y,
+  x = X,
+  model = c("lm", "feols_formula", "feols_formula_clu"),
+  control = CV) #12288 different models
+
+plot(specsdifmodels)
+resultsdifmodels <- specr(specsdifmodels, .options = opts2, .progress = TRUE)
+plot(resultsdifmodels)
