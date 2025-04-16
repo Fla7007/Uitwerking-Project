@@ -836,4 +836,18 @@ model_laggedER <- feols(lnEnergy ~ lag_lnER + lnPcca + lnDa + lnSize + lnAge + O
                     data = lagged_data,
                     vcov = "HC1")
 
-Table3 <- huxreg(model_coal, model_SO2, model_COD, model_SO2removalrate, model_lnexport, model_extraFE, model_laggedER)
+#Using modelsummary
+model_list2 <- list(
+  "Coal consumption" = model_coal,
+  "SO2 mean" = model_SO2, 
+  "COD mean" = model_COD, 
+  "SO2 removal rate" = model_SO2removalrate, 
+  "Export sales" = model_lnexport, 
+  "More FE" = model_extraFE,
+  "Lagged ER" = model_laggedER)
+
+modelsummary(model_list2,
+             coef_map = c("lnER" = "lnER", "LnERSO2" = "LnERSO2", "LnERCOD" = "LnERCOD",
+                          "SO2removalrate" = "SO2removalrate", "lag_lnER" = "lag_lnER"),
+             stars = TRUE,
+             gof_omit = "IC|Log|Adj|F|RMSE|R2 Within")
