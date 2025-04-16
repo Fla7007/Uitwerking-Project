@@ -384,230 +384,78 @@ huxreg("Robust SE" = model4_feols_RSE, "Clustered SE" = model4_feols_clustered) 
 huxreg("Robust SE" = model5_feols_RSE, "Clustered SE" = model5_feols_clustered)  # Despite other standard-errors, the significance of relationships and the estimated coefficients remains the same
 
 
-### Misspecification of the functional form ###
+### Density plots ###
 
 #lnER
-matplot(raw_data$lnER,raw_data$lnEnergy, pch=1)   #Plots X vs. Y using points (with pch = 1 as the symbol.) Helps us visually check whether Y has a linear relationship with X or if it appears nonlinear.
-
-?matplot()
 
 plot(density(na.omit(raw_data$lnER)))  #Plots the density estimate of X, showing its distribution
-plot(density(na.omit(raw_data$lnEnergy)))   #Plots the density of Y.
-
-matplot(raw_data$lnER,raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(lnEnergy ~ lnER, data = raw_data))  #summary(lm(Y~X)) stores the regression results in res_miss
-matplot(raw_data$lnER, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$lnER, t="l", col=2, add=T) #Plots the fitted regression line (red) on top of the scatter plot. Coefficients[1,1] is the intercept and coefficients [2,1] is the slope. add = T ensures the regression line is added to the existing scatter plot.
-
-
-matplot(exp(raw_data$lnER), raw_data$lnEnergy, pch = 1)
 plot(density(na.omit(exp(raw_data$lnER)))) 
-plot(density(na.omit(raw_data$lnEnergy)))
-matplot(exp(raw_data$lnER),raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(lnEnergy ~ exp(lnER), data = raw_data))  
-matplot(exp(raw_data$lnER), res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*exp(raw_data$lnER), t="l", col=2, add=T)
 
+plot(density(na.omit(raw_data$lnEnergy)))  #Plots the density of Y.
+plot(density(na.omit(exp(raw_data$lnEnergy))))
 
 #lnPcca
-matplot(raw_data$lnPcca,raw_data$lnEnergy, pch=1)
 
 plot(density(na.omit(raw_data$lnPcca)))
-plot(density(na.omit(filtered_raw_data$lnEnergy)))
-
-matplot(raw_data$lnPcca,raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(lnEnergy ~ lnPcca, data = raw_data))
-matplot(raw_data$lnPcca, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$lnPcca, t="l", col=2, add=T)
-
-
-matplot(exp(raw_data$lnPcca), raw_data$lnEnergy, pch = 1)
 plot(density(na.omit(exp(raw_data$lnPcca)))) 
-plot(density(na.omit(raw_data$lnEnergy)))
-matplot(exp(raw_data$lnPcca),raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(lnEnergy ~ exp(lnPcca), data = raw_data))  
-matplot(exp(raw_data$lnPcca), res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*exp(raw_data$lnPcca), t="l", col=2, add=T)
-
 
 #lnDa 
-matplot(raw_data$lnDa,raw_data$lnEnergy, pch=1)
 
 plot(density(na.omit(raw_data$lnDa)))
-plot(density(na.omit(raw_data$lnEnergy)))
-
-matplot(raw_data$lnDa,raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(lnEnergy ~ lnDa, data = raw_data))
-matplot(raw_data$lnDa, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$lnDa, t="l", col=2, add=T)
-
-matplot(exp(raw_data$lnDa), raw_data$lnEnergy, pch = 1)
 plot(density(na.omit(exp(raw_data$lnDa)))) 
-plot(density(na.omit(raw_data$lnEnergy)))
-matplot(exp(raw_data$lnDa),raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(lnEnergy ~ exp(lnDa), data = raw_data))  
-matplot(exp(raw_data$lnDa), res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*exp(raw_data$lnDa), t="l", col=2, add=T)
-
-
 
 #lnSize 
-matplot(raw_data$lnSize,raw_data$lnEnergy, pch=1)
 
 plot(density(na.omit(raw_data$lnSize)))
-plot(density(na.omit(raw_data$lnEnergy)))
-
-matplot(raw_data$lnSize,raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(lnEnergy ~ lnSize, data = raw_data))
-matplot(raw_data$lnSize, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$lnSize, t="l", col=2, add=T)
-
-matplot(exp(raw_data$lnSize), raw_data$lnEnergy, pch = 1)
 plot(density(na.omit(exp(raw_data$lnSize)))) 
-plot(density(na.omit(raw_data$lnEnergy)))
-matplot(exp(raw_data$lnSize),raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(lnEnergy ~ exp(lnSize), data = raw_data))  
-matplot(exp(raw_data$lnSize), res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*exp(raw_data$lnSize), t="l", col=2, add=T)
-
 
 #lnAge 
-matplot(raw_data$lnAge,raw_data$lnEnergy, pch=1)
 
 plot(density(na.omit(raw_data$lnAge)))
-plot(density(na.omit(raw_data$lnEnergy)))
-
-matplot(raw_data$lnAge,raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(lnEnergy ~ lnAge, data = raw_data))
-matplot(raw_data$lnAge, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$lnAge, t="l", col=2, add=T)
-
-matplot(exp(raw_data$lnAge), raw_data$lnEnergy, pch = 1)
 plot(density(na.omit(exp(raw_data$lnAge)))) 
-plot(density(na.omit(raw_data$lnEnergy)))
-matplot(exp(raw_data$lnAge),raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(lnEnergy ~ exp(lnAge), data = raw_data))  
-matplot(exp(raw_data$lnAge), res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*exp(raw_data$lnAge), t="l", col=2, add=T)
-
 
 #Own 
-matplot(raw_data$Own, raw_data$lnEnergy, pch=1)
 
 plot(density(na.omit(raw_data$Own)))
 plot(density(na.omit(log(raw_data$Own))))
 plot(density(log(na.omit(raw_data$Own))))
-plot(density(na.omit(raw_data$lnEnergy)))
-
-matplot(raw_data$Own, raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(raw_data$lnEnergy ~ raw_data$Own))
-matplot(raw_data$Own, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$Own, t="l", col=2, add=T)
-
 
 #Export
-matplot(raw_data$Export, raw_data$lnEnergy, pch=1)
 
 plot(density(na.omit(raw_data$Export)))
 plot(density(log(na.omit(raw_data$Export))))
 plot(density(na.omit(raw_data$lnEnergy)))
 
-matplot(raw_data$Export,raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(raw_data$lnEnergy ~ raw_data$Export))
-matplot(raw_data$Export, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$Export, t="l", col=2, add=T)
-
-matplot(log(raw_data$Export),raw_data$lnEnergy, pch=1)
-res <- summary(lm(raw_data$lnEnergy ~ log(raw_data$Export)))
-matplot(log(raw_data$Export), res$coefficients[1,1] + res$coefficients[2,1]*log(raw_data$Export), t="l", col=2, add=T)          
-#De code met log() geeft error.
-               
 #lnOpen
-matplot(raw_data$lnOpen,raw_data$lnEnergy, pch=1)
 
 plot(density(na.omit(raw_data$lnOpen)))
-plot(density(na.omit(raw_data$lnEnergy)))
-
-matplot(raw_data$lnOpen,raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(raw_data$lnEnergy ~ raw_data$lnOpen))
-matplot(raw_data$lnOpen, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$lnOpen, t="l", col=2, add=T)
-
-matplot(exp(raw_data$lnOpen), raw_data$lnEnergy, pch = 1)
 plot(density(na.omit(exp(raw_data$lnOpen)))) 
-plot(density(na.omit(raw_data$lnEnergy)))
-matplot(exp(raw_data$lnOpen),raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(lnEnergy ~ exp(lnOpen), data = raw_data))  
-matplot(exp(raw_data$lnOpen), res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*exp(raw_data$lnOpen), t="l", col=2, add=T)
 
-  
 #Ind 
-matplot(raw_data$Ind, raw_data$lnEnergy, pch=1)
                
 plot(density(na.omit(raw_data$Ind)))
 plot(density(log(na.omit(raw_data$Ind))))
-plot(density(na.omit(raw_data$lnEnergy)))
-               
-matplot(raw_data$Ind,raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(raw_data$lnEnergy ~ raw_data$Ind))
-matplot(raw_data$Ind, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$Ind, t="l", col=2, add=T)
-               
-matplot(log(raw_data$Ind),raw_data$lnEnergy, pch=1)
-res <- summary(lm(raw_data$lnEnergy ~ log(raw_data$Ind)))
-matplot(log(raw_data$Ind), res$coefficients[1,1] + res$coefficients[2,1]*log(raw_data$Ind), t="l", col=2, add=T)
-               
+
 #Endowment
-matplot(raw_data$Endowment, raw_data$lnEnergy, pch=1)
-               
+              
 plot(density(na.omit(raw_data$Endowment)))
 plot(density(log(na.omit(raw_data$Endowment))))
-plot(density(na.omit(raw_data$lnEnergy)))
-               
-matplot(raw_data$Endowment, raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(raw_data$lnEnergy ~ raw_data$Endowment))
-matplot(raw_data$Endowment, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$Endowment, t="l", col=2, add=T)
-               
-matplot(log(raw_data$Endowment),raw_data$lnEnergy, pch=1)
-res <- summary(lm(raw_data$lnEnergy ~ log(raw_data$Endowment)))
-matplot(log(raw_data$Endowment), res$coefficients[1,1] + res$coefficients[2,1]*log(raw_data$Endowment), t="l", col=2, add=T)
-#De code met log() geeft error.               
                
 #Rail
-matplot(raw_data$Rail, raw_data$lnEnergy, pch=1)
                
 plot(density(na.omit(raw_data$Rail)))
 plot(density(log(na.omit(raw_data$Rail))))
-plot(density(na.omit(raw_data$lnEnergy)))
-               
-matplot(raw_data$Rail,raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(raw_data$lnEnergy ~ raw_data$Rail))
-matplot(raw_data$Rail, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$Rail, t="l", col=2, add=T)
-               
-matplot(log(raw_data$Rail),raw_data$lnEnergy, pch=1)
-res <- summary(lm(raw_data$lnEnergy ~ log(raw_data$Rail)))
-matplot(log(raw_data$Rail), res$coefficients[1,1] + res$coefficients[2,1]*log(raw_data$Rail), t="l", col=2, add=T)
-               
                
 #lnPcgdp
-matplot(raw_data$lnPcgdp,raw_data$lnEnergy, pch=1)
-               
+
 plot(density(na.omit(raw_data$lnPcgdp)))
-plot(density(na.omit(raw_data$lnEnergy)))
-
-matplot(raw_data$lnPcgdp,raw_data$lnEnergy, pch=1)               
-res_miss <- summary(lm(lnEnergy ~ lnPcgdp, data = raw_data))
-matplot(raw_data$lnPcgdp, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$lnPcgdp, t="l", col=2, add=T)
-
-matplot(exp(raw_data$lnPcgdp), raw_data$lnEnergy, pch = 1)
 plot(density(na.omit(exp(raw_data$lnPcgdp)))) 
-plot(density(na.omit(raw_data$lnEnergy)))
-matplot(exp(raw_data$lnPcgdp),raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(lnEnergy ~ exp(lnPcgdp), data = raw_data))  
-matplot(exp(raw_data$lnPcgdp), res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*exp(raw_data$lnPcgdp), t="l", col=2, add=T)
 
-               
 #Concentration
-matplot(raw_data$Concentration, raw_data$lnEnergy, pch=1)
                
 plot(density(na.omit(raw_data$Concentration)))
 plot(density(log(na.omit(raw_data$Concentration))))
-plot(density(na.omit(raw_data$lnEnergy)))
-               
-matplot(raw_data$Concentration,raw_data$lnEnergy, pch=1)
-res_miss <- summary(lm(raw_data$lnEnergy ~ raw_data$Concentration))
-matplot(raw_data$Concentration, res_miss$coefficients[1,1] + res_miss$coefficients[2,1]*raw_data$Concentration, t="l", col=2, add=T)
-               
-matplot(log(raw_data$Concentration),raw_data$lnEnergy, pch=1)
-res <- summary(lm(raw_data$lnEnergy ~ log(raw_data$Concentration)))
-matplot(log(raw_data$Concentration), res$coefficients[1,1] + res$coefficients[2,1]*log(raw_data$Concentration), t="l", col=2, add=T)
-#De code met log() geeft error.
+
 
 #New regression models with other combinations of fixed effects
 #Extra model 1 using feols (with control variables and only year FE)
