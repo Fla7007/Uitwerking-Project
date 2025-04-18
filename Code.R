@@ -739,29 +739,30 @@ modelsummary(model_list2,
 
 
 #Table 6
-model1 <- feols(Coalratio ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+model1_table6 <- feols(Coalratio ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                 + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final, data = raw_data, vcov = "HC1")
-model2 <- feols(Oilratio ~  lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+model2_table6 <- feols(Oilratio ~  lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                 + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final, data = raw_data, vcov = "HC1")
-model3 <- feols(Gasratio ~  lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+model3_table6 <- feols(Gasratio ~  lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                 + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final, data = raw_data, vcov = "HC1")
 
 
 models <- list(
-  "Coal ratio" = model1,
-  "Oil ratio" = model2,
-  "Gas ratio" = model3)
+  "Coal ratio" = model1_table6,
+  "Oil ratio" = model2_table6,
+  "Gas ratio" = model3_table6)
 
-modelsummary(
-  models,
-  stars = TRUE,
-  gof_omit = "Adj|RMSE|Std.Errors",
+modelsummary(models,
+             stars = TRUE,
+  gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
   add_rows = data.frame(
     rowname = c("Control variables", "Year FE", "Firm FE", "Industry FE"),
     `Coal ratio` = c("Yes", "Yes", "Yes", "Yes"),
     `Oil ratio` = c("Yes", "Yes", "Yes", "Yes"),
     `Gas ratio` = c("Yes", "Yes", "Yes", "Yes")),
   title = "Table 6: Checks on mechanisms of firms’ energy structure")
+
+
 
 
 
