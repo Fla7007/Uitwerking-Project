@@ -736,3 +736,39 @@ modelsummary(model_list2,
                           "SO2removalrate" = "SO2removalrate", "lag_lnER" = "lag_lnER"),
              stars = TRUE,
              gof_omit = "IC|Log|Adj|F|RMSE|R2 Within")
+
+
+#Table 6
+model1 <- feols(Coalratio ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final, data = raw_data, vcov = "HC1")
+model2 <- feols(Oilratio ~  lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final, data = raw_data, vcov = "HC1")
+model3 <- feols(Gasratio ~  lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final, data = raw_data, vcov = "HC1")
+
+
+models <- list(
+  "Coal ratio" = model1,
+  "Oil ratio" = model2,
+  "Gas ratio" = model3)
+
+modelsummary(
+  models,
+  stars = TRUE,
+  gof_omit = "Adj|RMSE|Std.Errors",
+  add_rows = data.frame(
+    rowname = c("Control variables", "Year FE", "Firm FE", "Industry FE"),
+    `Coal ratio` = c("Yes", "Yes", "Yes", "Yes"),
+    `Oil ratio` = c("Yes", "Yes", "Yes", "Yes"),
+    `Gas ratio` = c("Yes", "Yes", "Yes", "Yes")),
+  title = "Table 6: Checks on mechanisms of firms’ energy structure")
+
+
+
+
+
+
+
+
+
+
