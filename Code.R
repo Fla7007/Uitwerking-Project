@@ -18,6 +18,10 @@ raw_data <- read_dta("data.dta")
 summary(raw_data)
 View(raw_data)
 
+raw_data2 <- read_dta("20012009firm.dta")
+summary(raw_data2)
+View(raw_data2)
+
 #######################
 ###Descriptive table###
 #######################
@@ -683,8 +687,10 @@ plot(specsdifmodels)
 resultsdifmodels <- specr(specsdifmodels, .options = opts2, .progress = TRUE)
 plot(resultsdifmodels)
 
+####################
 ### Extra tables ###
-#Table 3
+####################
+### Table 3 ###
 model_coal <- feols(Lncoalcons ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                           + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
                           data = raw_data,
@@ -721,7 +727,6 @@ model_laggedER <- feols(lnEnergy ~ lag_lnER + lnPcca + lnDa + lnSize + lnAge + O
                     data = lagged_data,
                     vcov = "HC1")
 
-#Using modelsummary
 model_list2 <- list(
   "Coal consumption" = model_coal,
   "SO2 mean" = model_SO2, 
@@ -747,8 +752,131 @@ modelsummary(model_list2,
                `Lagged ER` = c("X")),
              title = "Table 3. Robustness checks' results")
 
+### Table 4 ###
+#Case: open after 2001
+data_openafter2001 <- raw_data %>%
+  filter(year-age <= 2001)
+model1_table4 <- model5_feols_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                                           + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                                           data = data_openafter2001,
+                                           vcov = "HC1")
+#Case: open after 2005
+data_openafter2005 <- raw_data %>%
+  filter(year-age <= 2005)
+model2_table4 <- model5_feols_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                                           + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                                           data = data_openafter2005,
+                                           vcov = "HC1")
+#Case: exit after 2005
+data_exitafter2005 <- raw_data %>%
+  group_by(id_in_panel) %>%
+  arrange(year, .by_group = T) %>%
+  mutate(sign = last(year)) %>%
+  ungroup() %>%
+  filter(sign >= 2005) %>%
+  select(-sign)
+model3_table4 <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                                           + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                                           data = data_exitafter2005,
+                                           vcov = "HC1")
+#Case: Change adresses
+data_changeaddresses <- raw_data %>%
+  group_by(id_in_panel) %>%
+  arrange(year, .by_group = T) %>%
+  mutate(
+    sign = if_else(row_number() == 1 | area_final == lag(area_final), 1, NA_real_),
+    sum_na = sum(is.na(sign))
+  ) %>%
+  ungroup() %>%
+  filter(sum_na != 1) %>%
+  select(-sign, -sum_na)
+model4_table4 <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                       data = data_changeaddresses,
+                       vcov = "HC1")
 
-#Table 6
+#Case: all previous four
+data_combo <- raw_data %>%
+  filter(year-age <= 2005) %>%
+  group_by(id_in_panel) %>%
+  arrange(year, .by_group = T) %>%
+  mutate(sign1 = last(year), sign2 = if_else(row_number() == 1 | area_final == lag(area_final), 1, NA_real_),
+         sum_na = sum(is.na(sign2))) %>%
+  ungroup() %>%
+  filter(sign1 >= 2005, sum_na != 1) %>%
+  select(-sign1, -sign2, -sum_na)
+model5_table4 <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                       data = data_combo,
+                       vcov = "HC1")
+
+#Case: 2001-2009 existence
+model6_table4 <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                       data = raw_data2,
+                       vcov = "HC1")
+
+#IV (with additional controls)
+data_IV <- raw_data %>%
+  mutate(
+    reductionper2006 = if_else(year == 2006, reductionper, 0),
+    reductionper2007 = if_else(year == 2007, reductionper, 0),
+    reductionper2008 = if_else(year == 2008, reductionper, 0),
+    reductionper2009 = if_else(year == 2009, reductionper, 0)
+  ) %>%
+  select(-reductionper)     #This creates four new variables, each equal to reductionper only in a specific year, and 0 elsewhere
+                            # = year-specific instruments to avoid multicollinearity and match identification strategies like event studies or staggered treatments
+
+model7_table4 <- feols(lnEnergy ~ 1 + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration| id_in_panel + year + ind_final | 
+                      lnER ~ reductionper2006 + reductionper2007 + reductionper2008 + reductionper2009,
+                      data = data_IV,
+                      vcov = "HC1")
+
+model8_table4 <- feols(lnEnergy ~ 1 + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + 
+                         Lnenergyint2001*factor(year) + Lnpollutint2001*factor(year)| id_in_panel + year + ind_final | 
+                         lnER ~ reductionper2006 + reductionper2007 + reductionper2008 + reductionper2009,
+                       data = data_IV,
+                       vcov = "HC1")
+
+model9_table4 <- feols(lnEnergy ~ 1 + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + 
+                         Lnenergyint2005*factor(year) + Lnpollutint2005*factor(year)| id_in_panel + year + ind_final | 
+                         lnER ~ reductionper2006 + reductionper2007 + reductionper2008 + reductionper2009,
+                       data = data_IV,
+                       vcov = "HC1")
+
+model_list3 <- list(
+  "Open after 2001" = model1_table4,
+  "Open after 2005" = model2_table4, 
+  "Exit after 2005" = model3_table4, 
+  "Changed adresses" = model4_table4, 
+  "All four" = model5_table4, 
+  "2001-2009 existence" = model6_table4,
+  "IV" = model7_table4,
+  "IV with additional controls (2001)" = model8_table4,
+  "IV with additional controls (2005)" = model9_table4)
+
+modelsummary(model_list3,
+             coef_map = c("lnER" = "lnER", "fit_lnER" = "lnER"),
+             stars = TRUE,
+             gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
+             add_rows = data.frame(
+               rowname = c("Lnenergyint2001*year", "Lnpollutint2001*year", "Lnenergyint2005*year", "Lnpollutint2005*year", "Control variables"),
+               `Open after 2001` = c("", "", "", "", "X"),
+               `Open after 2005` = c("", "", "", "", "X"),
+               `Exit after 2005` = c("", "", "", "", "X"),
+               `Changed adresses` = c("", "", "", "", "X"),
+               `All four` = c("", "", "", "", "X"),
+               `2001-2009 existence` = c("", "", "", "", "X"),
+               `IV` = c("", "", "", "", "X"),
+               `IV with additional controls (2001)` = c("X", "X", "", "", "X"),
+               `IV with additional controls (2005)` = c("", "", "X", "X", "X")),
+             title = "Table 4. Results of robustness checks")
+
+
+### Table 6 ###
 model1_table6 <- feols(Coalratio ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                 + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final, data = raw_data, vcov = "HC1")
 model2_table6 <- feols(Oilratio ~  lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
@@ -757,12 +885,12 @@ model3_table6 <- feols(Gasratio ~  lnER + lnPcca + lnDa + lnSize + lnAge + Own +
                 + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final, data = raw_data, vcov = "HC1")
 
 
-models_list3 <- list(
+models_list4 <- list(
   "Coal ratio" = model1_table6,
   "Oil ratio" = model2_table6,
   "Gas ratio" = model3_table6)
 
-modelsummary(models_list3,
+modelsummary(models_list4,
              coef_map = c("lnER" = "lnER"),
              stars = TRUE,
   gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
