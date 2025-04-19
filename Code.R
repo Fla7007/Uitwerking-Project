@@ -735,7 +735,17 @@ modelsummary(model_list2,
              coef_map = c("lnER" = "lnER", "LnERSO2" = "LnERSO2", "LnERCOD" = "LnERCOD",
                           "SO2removalrate" = "SO2removalrate", "lag_lnER" = "lag_lnER"),
              stars = TRUE,
-             gof_omit = "IC|Log|Adj|F|RMSE|R2 Within")
+             gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
+             add_rows = data.frame(
+               rowname = c("Control variables"),
+               `Coal consumption` = c("X"),
+               `SO2 mean` = c("X"),
+               `COD mean` = c("X"),
+               `SO2 removal rate` = c("X"),
+               `Export sales` = c("X"),
+               `More FE` = c("X"),
+               `Lagged ER` = c("X")),
+             title = "Table 3. Robustness checks' results")
 
 
 #Table 6
@@ -747,29 +757,18 @@ model3_table6 <- feols(Gasratio ~  lnER + lnPcca + lnDa + lnSize + lnAge + Own +
                 + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final, data = raw_data, vcov = "HC1")
 
 
-models <- list(
+models_list3 <- list(
   "Coal ratio" = model1_table6,
   "Oil ratio" = model2_table6,
   "Gas ratio" = model3_table6)
 
-modelsummary(models,
+modelsummary(models_list3,
+             coef_map = c("lnER" = "lnER"),
              stars = TRUE,
   gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
   add_rows = data.frame(
-    rowname = c("Control variables", "Year FE", "Firm FE", "Industry FE"),
-    `Coal ratio` = c("Yes", "Yes", "Yes", "Yes"),
-    `Oil ratio` = c("Yes", "Yes", "Yes", "Yes"),
-    `Gas ratio` = c("Yes", "Yes", "Yes", "Yes")),
-  title = "Table 6: Checks on mechanisms of firms’ energy structure")
-
-
-
-
-
-
-
-
-
-
-
-
+    rowname = c("Control variables"),
+    `Coal ratio` = c("X"),
+    `Oil ratio` = c("X"),
+    `Gas ratio` = c("X")),
+  title = "Table 6. Checks on mechanisms of firms’ energy structure")
