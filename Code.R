@@ -523,7 +523,7 @@ sample_data <- data_NAY %>%
   ungroup()  # Remove the grouping to return the full data
 
 #Setting parallelisation#
-plan(strategy = multisession, workers = 6)
+plan(strategy = multisession, workers = 5)
 
 #LM (without FE)#
 #All possible combinations of the 12 selected control variables
@@ -622,7 +622,29 @@ specsfeols <- setup(
 
 plot(specsfeols)
 resultsfeols <- specr(specsfeols, .options = opts, .progress = TRUE) #takes +/- 2h to run
+resultsfeols <- readRDS("Resultsfeols.RData") #The specr object was saved after running so it can easily be reloaded without fully running again
 plot(resultsfeols)
+
+        ###EXTRA: zooming in on the extremes
+        bottom <- resultsfeols$data %>% arrange(estimate) %>% slice(1:200) %>% mutate(extreme = "Most Negative") #5% of the total models with the lowest estimate
+        top <- resultsfeols$data %>% arrange(desc(estimate)) %>% slice(1:200) %>% mutate(extreme = "Most Positive") #5% of the total models with the highest estimate
+        extremes <- bind_rows(bottom, top)
+        
+        freqs <- extremes %>%
+          separate_rows(controls, sep = "\\+") %>% # Split 'controls' into multiple rows
+          mutate(controls = trimws(controls)) %>% # Trim whitespace
+          count(extreme, controls) %>% # Count occurrences
+          group_by(extreme) %>% 
+          mutate(inclusion_rate = n / 200) %>% # Calculate inclusion rate
+          ungroup()
+        
+        ggplot(freqs, aes(x = reorder(controls, inclusion_rate), y = inclusion_rate, fill = extreme)) +
+          geom_col(position = "dodge") +
+          coord_flip() +
+          labs(title = paste("Control Inclusion in Top/Bottom", 200, "Specs"),
+               x = "Control", y = "Inclusion Rate") +
+          theme_minimal()
+        #CONCLUSION: 
 
 #Possible combinations of the first four CV with the last eight CV always included
 specsfeols1 <- setup(
