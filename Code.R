@@ -12,6 +12,7 @@ library(modelsummary)
 library(webshot2)
 library(huxtable)
 library(Hmisc)
+library(ggplot2)
 
 #Reading data
 raw_data <- read_dta("data.dta")
@@ -516,10 +517,10 @@ library(furrr)
 
 #Taking a random sample#
 data_NAY <- raw_data %>% drop_na(lnEnergy) #remove NA from the Y variable
+set.seed(123)
 sample_data <- data_NAY %>%
-  group_by(ind_final, id_in_panel) %>%  # Group by industry and firm
-  filter(n_distinct(year) > 1) %>%  # Keep only firms with data across multiple years (if applicable)
-  sample_frac(0.2) %>%  # Take a random sample of 20% of the firms for each industry
+  group_by(ind_final, id_in_panel) %>%
+  sample_frac(0.25) %>%  # Take a random sample of 20% of the firms for each industry
   ungroup()  # Remove the grouping to return the full data
 
 #Setting parallelisation#
@@ -534,7 +535,7 @@ specslm <- setup(
   model = "lm",
   controls = CV) #4096 different models
 
-plot(specslm)
+plot(specslm) #not readable, so not useful
 resultslm <- specr(specslm, .progress = TRUE)
 plot(resultslm)
 
@@ -559,12 +560,12 @@ plot(resultslm)
       theme_minimal()
     #CONCLUSION: 
       ## lnPcca is always included in the most negative models and never in the most positive ones => suggests a negative polarising effect 
-      ## lnPcgdp is often included in the most positive models and never in the most negative ones => suggests a positive polarising effect
+      ## lnSize and lnOpen are often included in the most positive models and never in the most negative ones => suggests a positive polarising effect
       ## Endowment and Concentration are included in both groups. However, they are more present in the positive models than in the negative ones
-      ## lnSize and lnOpen are only included in the most positive models, but in less than 50%
+      ## lnPcgdp is only included in the most positive models, but in less than 50%
       ## All other control variables are equaly present in both groups
 
-#Possible combinations of the first six CV with the last six CV always included
+#Possible combinations of the firm-level CVs with the other CVs always included
 specslm1 <- setup(
   data = sample_data,
   y = Y,
@@ -620,9 +621,9 @@ specsfeols <- setup(
   model = "feols_formula",
   controls = CV) #4096 different models
 
-plot(specsfeols)
+plot(specsfeols) #not readable, so not useful
 resultsfeols <- specr(specsfeols, .options = opts, .progress = TRUE) #takes +/- 2h to run
-resultsfeols <- readRDS("Resultsfeols.RData") #The specr object was saved after running so it can easily be reloaded without fully running again
+resultsfeols <- readRDS("resultsfeols.RData") #The specr object was saved after running so it can easily be reloaded without fully running again
 plot(resultsfeols)
 
         ###EXTRA: zooming in on the extremes
@@ -646,14 +647,14 @@ plot(resultsfeols)
           theme_minimal()
         #CONCLUSION: 
 
-#Possible combinations of the first four CV with the last eight CV always included
+#Possible combinations of the firm-level CVs with the other CVs always included
 specsfeols1 <- setup(
   data = sample_data,
   y = Y,
   x = X,
   model = "feols_formula",
-  controls = CV[1:4],
-  add_to_formula = "Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration") #16 different models
+  controls = CV[1:6],
+  add_to_formula = "lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration") #64 different models
 
 plot(specsfeols1)
 resultsfeols1 <- specr(specsfeols1, .options = opts, .progress = TRUE)
