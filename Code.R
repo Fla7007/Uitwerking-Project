@@ -279,8 +279,27 @@ lasso_X <- rlasso(lnER ~ citycode + age + L + area_final + Coalratio + Oilratio 
                   data = raw_data)
 coef(lasso_Y)
 coef(lasso_X)
-## Variables with non-zero coefficients in both models: 
-## lnEnergyeff, lnDa, lnSize, Own, lnPcgdp, Concentration, LnERCOD, Lncoalcons, HighPollution, Largefirm, energy_intensive, Gasratio, TargetDummy
+
+vars_Y <- names(coef(lasso_Y)[coef(lasso_Y) != 0])
+vars_X <- names(coef(lasso_X)[coef(lasso_X) != 0])
+
+vars_Y <- setdiff(vars_Y, "(Intercept)")
+vars_X <- setdiff(vars_X, "(Intercept)")
+
+selected_CV <- intersect(vars_Y, vars_X)
+print(selected_CV)
+## Variables with non-zero coefficients in both models: lnEnergyeff, lnDa, lnSize, Own, lnPcgdp, Concentration, LnERCOD, Lncoalcons, HighPollution, Largefirm, energy_intensive, Gasratio, TargetDummy
+
+# New model with other selection of control variables, with all FE
+model5_new_feols_RSE <- feols(as.formula(paste("lnEnergy ~ lnER +", paste(selected_CV, collapse = " + "),"|id_in_panel + year + ind_final")), 
+                              data = raw_data,
+                              vcov = "HC1")
+
+# Comparison with original model
+huxreg("Original model" = model5_feols_RSE, "Double Lasso selected CVs" = model5_new_feols_RSE)
+## Compared to the original model, the new model gives better logLik and AIC values (higher logLik, lower AIC) 
+## So based on that, the new created model is prefered over the original one.
+## In the new created model lnER is not significantly related to lnEnergy
 
 
                     ## using rlasso with fixed effects
@@ -343,27 +362,6 @@ coef(lasso_X)
                     # Print the coefficients of the final Lasso model with fixed effects
                     print(coef(lasso_model_fe)) # all coef are zero
                                  
-
-# New model with other selection of control variables, without FE
-model2_new <- lm(lnEnergy ~ lnER + lnEnergyeff + lnDa + lnSize + Own + lnPcgdp + Concentration +
-                     LnERCOD + Lncoalcons + HighPollution + Largefirm + energy_intensive + Gasratio + TargetDummy,
-                   data = raw_data)
-model2_new_RSE <- coeftest(model2_new, vcov. = vcovHC, type = "HC1")
-
-
-# New model with other selection of control variables, with all FE
-model5_new_feols_RSE <- feols(lnEnergy ~ lnER + lnEnergyeff + lnDa + lnSize + Own + lnPcgdp + Concentration +
-                        LnERCOD + Lncoalcons + HighPollution + Largefirm + energy_intensive + Gasratio + TargetDummy|
-                        id_in_panel + year + ind_final,
-                      data = raw_data, 
-                      vcov = "HC1")
-
-# Comparison with original models
-huxreg(model2_RSE, model2_new_RSE, model5_feols_RSE, model5_new_feols_RSE)
-## Compared to the original models, these new models with other control variables gives better logLik and AIC values (higher logLik, lower AIC) 
-## So based on that, the new created models are prefered over the original ones.
-## In the new created models lnER is not significantly related to lnEnergy
-
 
 ### Clustered SE ###
 # Alternative model 3 with clusterd SE
@@ -855,6 +853,10 @@ model7_table4 <- feols(lnEnergy ~ 1 + lnPcca + lnDa + lnSize + lnAge + Own + Exp
                       lnER ~ reductionper2006 + reductionper2007 + reductionper2008 + reductionper2009,
                       data = data_IV,
                       vcov = "HC1")
+summary(model7_table4)
+## According to the F-est the instruments are relevant 
+## Sargan test implies that IV might not be valid (p < 0.05 so H0 that the IV are valid may be rejected)
+## Wu-Hausman test implies that lnEnergy is exogenous and NOT endogenous (p > 0.05 so Ho that Y is exogenous cannot be rejected) => is IV needed???
 
 model8_table4 <- feols(lnEnergy ~ 1 + lnPcca + lnDa + lnSize + lnAge + Own + Export
                        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + 
@@ -862,6 +864,7 @@ model8_table4 <- feols(lnEnergy ~ 1 + lnPcca + lnDa + lnSize + lnAge + Own + Exp
                          lnER ~ reductionper2006 + reductionper2007 + reductionper2008 + reductionper2009,
                        data = data_IV,
                        vcov = "HC1")
+summary(model8_table4)
 
 model9_table4 <- feols(lnEnergy ~ 1 + lnPcca + lnDa + lnSize + lnAge + Own + Export
                        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + 
@@ -869,6 +872,7 @@ model9_table4 <- feols(lnEnergy ~ 1 + lnPcca + lnDa + lnSize + lnAge + Own + Exp
                          lnER ~ reductionper2006 + reductionper2007 + reductionper2008 + reductionper2009,
                        data = data_IV,
                        vcov = "HC1")
+summary(model9_table4)
 
 model_list3 <- list(
   "Open after 2001" = model1_table4,
