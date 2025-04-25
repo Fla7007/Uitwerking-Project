@@ -296,8 +296,13 @@ model5_new_feols_RSE <- feols(as.formula(paste("lnEnergy ~ lnER +", paste(select
                               vcov = "HC1")
 
 # Comparison with original model
-huxreg("Original model" = model5_feols_RSE, "Double Lasso selected CVs" = model5_new_feols_RSE)
-## Compared to the original model, the new model gives better logLik and AIC values (higher logLik, lower AIC) 
+model_comparison <- list("Original model" = model5_feols_RSE, "Double Lasso selected CVs" = model5_new_feols_RSE)
+modelsummary(model_comparison,
+             stars = TRUE,
+             gof_omit = "Adj|BIC|F|Std.Errors|R2 Within",
+             output = "Original vs new model 5.png",
+             title = "Model 5 with other CV")
+## Compared to the original model, the new model gives a better AIC value and a better RMSE (both lower) 
 ## So based on that, the new created model is prefered over the original one.
 ## In the new created model lnER is not significantly related to lnEnergy
 
@@ -390,7 +395,6 @@ huxreg("Robust SE" = model5_feols_RSE, "Clustered SE" = model5_feols_clustered) 
 ### Density plots ###
 
 #lnER
-
 plot(density(na.omit(raw_data$lnER)))  #Plots the density estimate of X, showing its distribution
 plot(density(na.omit(exp(raw_data$lnER)))) 
 
@@ -398,69 +402,57 @@ plot(density(na.omit(raw_data$lnEnergy)))  #Plots the density of Y.
 plot(density(na.omit(exp(raw_data$lnEnergy))))
 
 #lnPcca
-
 plot(density(na.omit(raw_data$lnPcca)))
 plot(density(na.omit(exp(raw_data$lnPcca)))) 
 
 #lnDa 
-
 plot(density(na.omit(raw_data$lnDa)))
 plot(density(na.omit(exp(raw_data$lnDa)))) 
 
 #lnSize 
-
 plot(density(na.omit(raw_data$lnSize)))
 plot(density(na.omit(exp(raw_data$lnSize)))) 
 
 #lnAge 
-
 plot(density(na.omit(raw_data$lnAge)))
 plot(density(na.omit(exp(raw_data$lnAge)))) 
 
 #Own 
-
 plot(density(na.omit(raw_data$Own)))
 plot(density(na.omit(log(raw_data$Own))))
 plot(density(log(na.omit(raw_data$Own))))
 
 #Export
-
 plot(density(na.omit(raw_data$Export)))
 plot(density(log(na.omit(raw_data$Export))))
 plot(density(na.omit(raw_data$lnEnergy)))
 
 #lnOpen
-
 plot(density(na.omit(raw_data$lnOpen)))
 plot(density(na.omit(exp(raw_data$lnOpen)))) 
 
 #Ind 
-               
 plot(density(na.omit(raw_data$Ind)))
 plot(density(log(na.omit(raw_data$Ind))))
 
 #Endowment
-              
 plot(density(na.omit(raw_data$Endowment)))
 plot(density(log(na.omit(raw_data$Endowment))))
                
 #Rail
-               
 plot(density(na.omit(raw_data$Rail)))
 plot(density(log(na.omit(raw_data$Rail))))
                
 #lnPcgdp
-
 plot(density(na.omit(raw_data$lnPcgdp)))
 plot(density(na.omit(exp(raw_data$lnPcgdp)))) 
 
 #Concentration
-               
 plot(density(na.omit(raw_data$Concentration)))
 plot(density(log(na.omit(raw_data$Concentration))))
 
 
-#New regression models with other combinations of fixed effects
+### New regression models with other combinations of fixed effects ###
 #Extra model 1 using feols (with control variables and only year FE)
 extramodel1_feols_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                                + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | year, 
@@ -854,9 +846,9 @@ model7_table4 <- feols(lnEnergy ~ 1 + lnPcca + lnDa + lnSize + lnAge + Own + Exp
                       data = data_IV,
                       vcov = "HC1")
 summary(model7_table4)
-## According to the F-est the instruments are relevant 
+## According to the F-test the instruments are relevant 
 ## Sargan test implies that IV might not be valid (p < 0.05 so H0 that the IV are valid may be rejected)
-## Wu-Hausman test implies that lnEnergy is exogenous and NOT endogenous (p > 0.05 so Ho that Y is exogenous cannot be rejected) => is IV needed???
+## Wu-Hausman test implies that lnEnergy is exogenous and NOT endogenous (p > 0.05 so H0 that Y is exogenous cannot be rejected) => is IV needed???
 
 model8_table4 <- feols(lnEnergy ~ 1 + lnPcca + lnDa + lnSize + lnAge + Own + Export
                        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + 
