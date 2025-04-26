@@ -233,7 +233,7 @@ model_list <- list(
   "model 5" = model5_feols_RSE)
 
 modelsummary(model_list,
-             stars = TRUE,
+             stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
              gof_omit = "IC|Log|Adj|F|RMSE|R2 Within",
              output = "Benchmark regression results (lm + feols).png",
              title = "Benchmark regression results.") 
@@ -298,7 +298,7 @@ model5_new_feols_RSE <- feols(as.formula(paste("lnEnergy ~ lnER +", paste(select
 # Comparison with original model
 model_comparison <- list("Original model" = model5_feols_RSE, "Double Lasso selected CVs" = model5_new_feols_RSE)
 modelsummary(model_comparison,
-             stars = TRUE,
+             stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
              gof_omit = "Adj|BIC|F|Std.Errors|R2 Within",
              output = "Original vs new model 5.png",
              title = "Model 5 with other CV")
@@ -752,7 +752,7 @@ model_list2 <- list(
 modelsummary(model_list2,
              coef_map = c("lnER" = "lnER", "LnERSO2" = "LnERSO2", "LnERCOD" = "LnERCOD",
                           "SO2removalrate" = "SO2removalrate", "lag_lnER" = "lag_lnER"),
-             stars = TRUE,
+             stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
              gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
              add_rows = data.frame(
                rowname = c("Control variables"),
@@ -879,7 +879,7 @@ model_list3 <- list(
 
 modelsummary(model_list3,
              coef_map = c("lnER" = "lnER", "fit_lnER" = "lnER"),
-             stars = TRUE,
+             stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
              gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
              add_rows = data.frame(
                rowname = c("Lnenergyint2001*year", "Lnpollutint2001*year", "Lnenergyint2005*year", "Lnpollutint2005*year", "Control variables"),
@@ -911,7 +911,7 @@ models_list4 <- list(
 
 modelsummary(models_list4,
              coef_map = c("lnER" = "lnER"),
-             stars = TRUE,
+             stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
   gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
   add_rows = data.frame(
     rowname = c("Control variables"),
@@ -961,7 +961,7 @@ models_table7 <- list(
 
 modelsummary(models_table7,
              coef_map = c("lnER:SEO" = "lnER:SEO", "lnER:Foreign" = "lnER:Foreign", "lnER:Private" = "lnER:Private"),
-             stars = TRUE,
+             stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
              gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
              add_rows = data.frame(
                rowname = c("Control variables"),
@@ -971,3 +971,158 @@ modelsummary(models_table7,
                `Oil ratio` = c("X"),
                `Gas ratio` = c("X")),
              title = "Table 7. Results of heterogeneous effects of ownership structure")
+
+### Table 8 ###
+data_Size <- raw_data %>%
+    mutate(Large = if_else(Largefirm == 1, 1, 0),
+           Small = if_else(Largefirm == 1, 0, 1))
+
+model1_table8 <- feols(lnEnergy ~ lnER:Large + lnER:Small + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + Largefirm |id_in_panel + year + ind_final,
+                       data = data_Size, 
+                       vcov = "HC1")
+
+model2_table8 <- feols(lnEnergyeff ~ lnER:Large + lnER:Small + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + Largefirm |id_in_panel + year + ind_final,
+                       data = data_Size, 
+                       vcov = "HC1")
+
+model3_table8 <- feols(Coalratio ~ lnER:Large + lnER:Small + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + Largefirm |id_in_panel + year + ind_final,
+                       data = data_Size, 
+                       vcov = "HC1")
+
+model4_table8 <- feols(Oilratio ~ lnER:Large + lnER:Small + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + Largefirm |id_in_panel + year + ind_final,
+                       data = data_Size, 
+                       vcov = "HC1")
+
+model5_table8 <- feols(Gasratio ~ lnER:Large + lnER:Small + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + Largefirm |id_in_panel + year + ind_final,
+                       data = data_Size, 
+                       vcov = "HC1")
+
+#Note: the variable Largefirm is added as a CV. This is also the variable which is used to form the dummy variables at the beginning.
+
+models_table8 <- list(
+  "lnEnergy" = model1_table8,
+  "lnEnergyeff" = model2_table8,
+  "Coal ratio" = model3_table8,
+  "Oil ratio" = model4_table8,
+  "Gas ratio" = model5_table8)
+
+modelsummary(models_table8,
+             coef_map = c("lnER:Small" = "lnER:Small", "lnER:Large" = "lnER:Large"),
+             stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
+             gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
+             add_rows = data.frame(
+               rowname = c("Control variables"),
+               `lnEnergy` = c("X"),
+               `lnEnergyeff` = c("X"),
+               `Coal ratio` = c("X"),
+               `Oil ratio` = c("X"),
+               `Gas ratio` = c("X")),
+             title = "Table 8. Results of heterogeneous effects of firm scale")
+
+### Table 9 ###
+data_Pollution <- raw_data %>%
+  mutate(LowPollution = if_else(HighPollution == 1, 0, 1))
+
+model1_table9 <- feols(lnEnergy ~ lnER:HighPollution + lnER:LowPollution + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + HighPollution |id_in_panel + year + ind_final,
+                       data = data_Pollution, 
+                       vcov = "HC1")
+
+model2_table9 <- feols(lnEnergyeff ~ lnER:HighPollution + lnER:LowPollution + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + HighPollution |id_in_panel + year + ind_final,
+                       data = data_Pollution, 
+                       vcov = "HC1")
+
+model3_table9 <- feols(Coalratio ~ lnER:HighPollution + lnER:LowPollution + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + HighPollution |id_in_panel + year + ind_final,
+                       data = data_Pollution, 
+                       vcov = "HC1")
+
+model4_table9 <- feols(Oilratio ~ lnER:HighPollution + lnER:LowPollution + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + HighPollution|id_in_panel + year + ind_final,
+                       data = data_Pollution, 
+                       vcov = "HC1")
+
+model5_table9 <- feols(Gasratio ~ lnER:HighPollution + lnER:LowPollution + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + HighPollution|id_in_panel + year + ind_final,
+                       data = data_Pollution, 
+                       vcov = "HC1")
+
+#Note: the variable HighPollution is added as a CV. This is also the variable which is used to form the dummy variables at the beginning.
+
+models_table9 <- list(
+  "lnEnergy" = model1_table9,
+  "lnEnergyeff" = model2_table9,
+  "Coal ratio" = model3_table9,
+  "Oil ratio" = model4_table9,
+  "Gas ratio" = model5_table9)
+
+modelsummary(models_table9,
+             coef_map = c("lnER:LowPollution" = "lnER:LowPollution", "lnER:HighPollution" = "lnER:HighPollution"),
+             stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
+             gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
+             add_rows = data.frame(
+               rowname = c("Control variables"),
+               `lnEnergy` = c("X"),
+               `lnEnergyeff` = c("X"),
+               `Coal ratio` = c("X"),
+               `Oil ratio` = c("X"),
+               `Gas ratio` = c("X")),
+             title = "Table 9. Results of heterogeneous effects of pollution intensity")
+
+### Table 10 ###
+data_EnergyIntensity <- raw_data %>%
+  mutate(LowENINT = if_else(energy_intensive == 1, 0, 1),
+         HighENINT = if_else(energy_intensive == 1, 1, 0))
+
+model1_table10 <- feols(lnEnergy ~ lnER:HighENINT + lnER:LowENINT + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + energy_intensive |id_in_panel + year + ind_final,
+                       data = data_EnergyIntensity, 
+                       vcov = "HC1")
+
+model2_table10 <- feols(lnEnergyeff ~ lnER:HighENINT + lnER:LowENINT + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + energy_intensive |id_in_panel + year + ind_final,
+                       data = data_EnergyIntensity, 
+                       vcov = "HC1")
+
+model3_table10 <- feols(Coalratio ~ lnER:HighENINT + lnER:LowENINT + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + energy_intensive |id_in_panel + year + ind_final,
+                       data = data_EnergyIntensity, 
+                       vcov = "HC1")
+
+model4_table10 <- feols(Oilratio ~ lnER:HighENINT + lnER:LowENINT + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + energy_intensive |id_in_panel + year + ind_final,
+                       data = data_EnergyIntensity, 
+                       vcov = "HC1")
+
+model5_table10 <- feols(Gasratio ~ lnER:HighENINT + lnER:LowENINT + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + energy_intensive |id_in_panel + year + ind_final,
+                       data = data_EnergyIntensity, 
+                       vcov = "HC1")
+
+#Note: the variable energy_intensive is added as a CV. This is also the variable which is used to form the dummy variables at the beginning.
+
+models_table10 <- list(
+  "lnEnergy" = model1_table10,
+  "lnEnergyeff" = model2_table10,
+  "Coal ratio" = model3_table10,
+  "Oil ratio" = model4_table10,
+  "Gas ratio" = model5_table10)
+
+modelsummary(models_table10,
+             coef_map = c("lnER:LowENINT" = "lnER:LowENINT", "lnER:HighENINT" = "lnER:HighENINT"),
+             stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
+             gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
+             add_rows = data.frame(
+               rowname = c("Control variables"),
+               `lnEnergy` = c("X"),
+               `lnEnergyeff` = c("X"),
+               `Coal ratio` = c("X"),
+               `Oil ratio` = c("X"),
+               `Gas ratio` = c("X")),
+             title = "Table 10. Results of heterogeneous effects of energy intensity")
