@@ -919,3 +919,55 @@ modelsummary(models_list4,
     `Oil ratio` = c("X"),
     `Gas ratio` = c("X")),
   title = "Table 6. Checks on mechanisms of firms’ energy structure")
+
+### Table 7 ###
+data_Own <- raw_data %>%
+  mutate(
+    SEO = if_else(Own == 1, 1, 0),
+    Foreign = if_else(Own == 2, 1, 0),
+    Private = if_else(Own == 3, 1, 0))
+
+model1_table7 <- feols(lnEnergy ~ lnER:SEO + lnER:Foreign + lnER:Private + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final,
+                       data = data_Own, 
+                       vcov = "HC1")
+
+model2_table7 <- feols(lnEnergyeff ~ lnER:SEO + lnER:Foreign + lnER:Private + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final,
+                       data = data_Own, 
+                       vcov = "HC1")
+
+model3_table7 <- feols(Coalratio ~ lnER:SEO + lnER:Foreign + lnER:Private + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final,
+                       data = data_Own, 
+                       vcov = "HC1")
+
+model4_table7 <- feols(Oilratio ~ lnER:SEO + lnER:Foreign + lnER:Private + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final,
+                       data = data_Own, 
+                       vcov = "HC1")
+
+model5_table7 <- feols(Gasratio ~ lnER:SEO + lnER:Foreign + lnER:Private + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final,
+                       data = data_Own, 
+                       vcov = "HC1")
+
+models_table7 <- list(
+  "lnEnergy" = model1_table7,
+  "lnEnergyeff" = model2_table7,
+  "Coal ratio" = model3_table7,
+  "Oil ratio" = model4_table7,
+  "Gas ratio" = model5_table7)
+
+modelsummary(models_table7,
+             coef_map = c("lnER:SEO" = "lnER:SEO", "lnER:Foreign" = "lnER:Foreign", "lnER:Private" = "lnER:Private"),
+             stars = TRUE,
+             gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
+             add_rows = data.frame(
+               rowname = c("Control variables"),
+               `lnEnergy` = c("X"),
+               `lnEnergyeff` = c("X"),
+               `Coal ratio` = c("X"),
+               `Oil ratio` = c("X"),
+               `Gas ratio` = c("X")),
+             title = "Table 7. Results of heterogeneous effects of ownership structure")
