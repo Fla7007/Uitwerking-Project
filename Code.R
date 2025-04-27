@@ -38,14 +38,13 @@ dataset_descriptive <- raw_data %>%
   select(lnER, lnEnergy:Concentration) 
 stargazer(as.data.frame(dataset_descriptive), type = "html", title = "Summary statistics.", digits = 3, out = "Summary_statistics.html")
 
-#######################
-###Regression models###
-#######################
+#################################
+###Regression models (Table 2)###
+#################################
 
 ### Model 1 ###
 # Model 1 (without FE or control variables)
 model1 <- lm(lnEnergy~lnER, data = raw_data)
-summary(model1)
 model1_RSE <- coeftest(model1, vcov. = vcovHC, type = "HC1")
 ## Gives the same point estimators and standard errors as in the original paper, no R²
 
@@ -54,7 +53,6 @@ model1_RSE <- coeftest(model1, vcov. = vcovHC, type = "HC1")
 # Model 2 (with control variables, without FE)
 model2 <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
              + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, data = raw_data)
-summary(model2)
 model2_RSE <- coeftest(model2, vcov. = vcovHC, type = "HC1")
 ## Gives the same point estimators and standard errors as in the original paper, no R²
 
@@ -66,7 +64,6 @@ model3_plm <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Expor
               data = raw_data,
               index = c("ind_final"),
               model = "within")
-summary(model3)
 model3_plm_RSE <- coeftest(model3_plm, vcov. = vcovHC, type = "HC1")
 ## Does NOT give the same results as in the orginal paper: 
 ## there is no constant, the standard errors aren't the same and despite the values of the point estimators 
@@ -225,18 +222,17 @@ huxreg(model1_RSE, model2_RSE,model3_feols_RSE, model4_feols_RSE, model5_feols_R
        statistics = c("N. obs." = "nobs", "R squared" = "r.squared"))
 
 #Using modelsummary
-model_list <- list(
+models_table2 <- list(
   "model 1" = model1_RSE,
   "model 2" = model2_RSE,
   "model 3" = model3_feols_RSE,
   "model 4" = model4_feols_RSE,
   "model 5" = model5_feols_RSE)
 
-modelsummary(model_list,
+modelsummary(models_table2,
              stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
-             gof_omit = "IC|Log|Adj|F|RMSE|R2 Within",
-             output = "Benchmark regression results (lm + feols).png",
-             title = "Benchmark regression results.") 
+             gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
+             title = "Table 2. Benchmark regression results") 
 
 
 ##########################
@@ -478,9 +474,21 @@ extramodel4_feols_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge 
                           data = raw_data,
                           vcov = "HC1")
 # Overview #
-#Using huxreg 
-huxreg(extramodel1_feols_RSE, extramodel2_feols_RSE, extramodel3_feols_RSE, extramodel4_feols_RSE, 
-       statistics = c("N. obs." = "nobs", "R squared" = "r.squared"))
+models_FE <- list(
+  "No FE" = model2_RSE,
+  "Year FE" = extramodel1_feols_RSE, 
+  "Firm FE" = extramodel2_feols_RSE,
+  "Industry FE" = model3_feols_RSE,
+  "Year + Firm FE" = model4_feols_RSE,
+  "Firm + Industry FE" = extramodel4_feols_RSE,
+  "Year + Industry FE" = extramodel3_feols_RSE,
+  "All FE" = model5_feols_RSE)
+
+modelsummary(models_FE,
+             coef_map = c("lnER" = "lnER"),
+             stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
+             gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
+             title = "Different combinations of FE")
 
 ### Specification curve analysis ###
 Y <- "lnEnergy"
@@ -874,7 +882,7 @@ model9_table4 <- feols(lnEnergy ~ 1 + lnPcca + lnDa + lnSize + lnAge + Own + Exp
                        vcov = "HC1")
 summary(model9_table4)
 
-model_list3 <- list(
+models_table4 <- list(
   "Open after 2001" = model1_table4,
   "Open after 2005" = model2_table4, 
   "Exit after 2005" = model3_table4, 
@@ -885,7 +893,7 @@ model_list3 <- list(
   "IV with additional controls (2001)" = model8_table4,
   "IV with additional controls (2005)" = model9_table4)
 
-modelsummary(model_list3,
+modelsummary(models_table4,
              coef_map = c("lnER" = "lnER", "fit_lnER" = "lnER"),
              stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
              gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
@@ -931,26 +939,25 @@ model5_RSE_table5 <- feols(lnEnergyeff ~ lnER + lnPcca + lnDa + lnSize + lnAge +
                            data = raw_data,
                            vcov = "HC1")
 
-models_list5 <- list(                           #Dit is de manier waarop je een lijst maakt van de verschillende regressiemodellen die je hebt geschat. Elk model is opgeslagen als een object (zoals model1_RSE_table5, model2_RSE_table5, enz.) en deze objecten worden gegroepeerd in de lijst models_list5.
-  "Energy efficiency" = model1_RSE_table5,      #Door de modellen in een lijst te plaatsen, kun je ze allemaal tegelijkertijd doorgeven aan de modelsummary functie. Dit bespaart tijd en moeite omdat je niet elke regressie afzonderlijk hoeft aan te roepen wanneer je de samenvattende tabel genereert.
-  "Energy efficiency" = model2_RSE_table5,
-  "Energy efficiency" = model3_RSE_table5,
-  "Energy efficiency" = model4_RSE_table5,
-  "Energy efficiency" = model5_RSE_table5)
+models_table5 <- list(                           #Dit is de manier waarop je een lijst maakt van de verschillende regressiemodellen die je hebt geschat. Elk model is opgeslagen als een object (zoals model1_RSE_table5, model2_RSE_table5, enz.) en deze objecten worden gegroepeerd in de lijst models_list5.
+  "model 1" = model1_RSE_table5,      #Door de modellen in een lijst te plaatsen, kun je ze allemaal tegelijkertijd doorgeven aan de modelsummary functie. Dit bespaart tijd en moeite omdat je niet elke regressie afzonderlijk hoeft aan te roepen wanneer je de samenvattende tabel genereert.
+  "model 2" = model2_RSE_table5,
+  "model 3" = model3_RSE_table5,
+  "model 4" = model4_RSE_table5,
+  "model 5" = model5_RSE_table5)
 
-modelsummary(models_list5,
+modelsummary(models_table5,
              coef_map = c("lnER" = "lnER"),                         #In de coef_map geef je aan welke coëfficiënten je in de tabel wilt hernoemen of weergeven. De reden waarom alleen lnER in de coef_map staat, is omdat je in je oorspronkelijke code specifiek aangeeft dat je de coëfficiënt van lnER wilt weergeven in de samenvattende tabel.
              stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),      #Dit geeft aan dat je sterretjes wilt gebruiken om de significatieniveaus van je coëfficiënten aan te geven.
              gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",    #gof_omit verwijdert sommige statistieken zoals Adj, BIC, AIC, etc. en zorgt ervoor dat alleen de belangrijkste statistieken worden weergegeven in de output.
              add_rows = data.frame(                                 #Hier voeg je extra rijen toe aan de tabel. In dit geval voeg je de rij "Control variables" toe, wat aangeeft of control variables in elk model zijn opgenomen ("X" geeft aan of ze aanwezig zijn). Dit helpt de lezer snel te begrijpen of en wanneer bepaalde controlevariabelen zijn opgenomen in de modellen.
                rowname = c("Control variables"),
-               `Energy efficiency` = c("X"),
-               `Energy efficiency` = c("X"),
-               `Energy efficiency` = c("X"),
-               `Energy efficiency` = c("X"),
-               `Energy efficiency` = c("X")),
+               `model 1` = c(" "),
+               `model 2` = c("X"),
+               `model 3` = c("X"),
+               `model 4` = c("X"),
+               `model 5` = c("X")),
              title = "Table 5. Checks on mechanisms of firms’ energy efficiency")
-
 
 
 ### Table 6 ###
