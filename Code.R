@@ -486,7 +486,7 @@ huxreg(extramodel1_feols_RSE, extramodel2_feols_RSE, extramodel3_feols_RSE, extr
 Y <- "lnEnergy"
 X <- "lnER"
 FE <- "id_in_panel + year + ind_final"  # Fixed effects
-CV <- c("lnPcca", "lnDa", "lnSize", "lnAge", "Own", "Export", "lnOpen", "Ind", "Endowment", "Rail", "lnPcgdp", "Concentration")
+CV <- c("lnPcca", "lnDa", "lnSize", "lnAge", "Own", "Export", "lnOpen", "Endowment", "Rail", "lnPcgdp", "Ind", "Concentration")
 
 # Using speccurvie (DO NOT RUN THIS CODE)
 library(speccurvieR)
@@ -638,43 +638,51 @@ plot(resultsfeols)
         #CONCLUSION: 
 
 #Possible combinations of the firm-level CVs with the other CVs always included
+#region-level variables: lnOpen; Endowment; Rail; lnPcgdp
+#industry-level variables: Ind; Concentration
+#firm-level variables: lnPcca; lnDa; lnSize; lnAge; Own; Export
+
+#Possible combinations of the region-level variables with the industry-level variables and firm-level variables always included.                
 specsfeols1 <- setup(
   data = sample_data,
   y = Y,
   x = X,
   model = "feols_formula",
-  controls = CV[1:6],
-  add_to_formula = "lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration") #64 different models
+  controls = CV[7:10],
+  add_to_formula = "Ind + Concentration + lnPcca + lnDa + lnSize + lnAge + Own + Export") #16 models
 
 plot(specsfeols1)
 resultsfeols1 <- specr(specsfeols1, .options = opts, .progress = TRUE)
 plot(resultsfeols1)
+#Het effect is consistent niet-significant over alle modelspecificaties. 
 
-#Possible combinations of the middle four CV with the first and last four CV always included
+#Possible combinations of the industry-level variables with the region-level variables and firm-level variables always included.
 specsfeols2 <- setup(
   data = sample_data,
   y = Y,
   x = X,
   model = "feols_formula",
-  controls = CV[5:8],
-  add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Endowment + Rail + lnPcgdp + Concentration") #16 different models
+  controls = CV[11:12],
+  add_to_formula = "lnOpen + Endowment + Rail + lnPcgdp + lnPcca + lnDa + lnSize + lnAge + Own + Export") 
 
 plot(specsfeols2)
 resultsfeols2 <- specr(specsfeols2, .options = opts, .progress = TRUE)
 plot(resultsfeols2)
+#Geen significant verband tussen X en Y, ongeacht de gekozen modelspecificatie.
 
-#Possible combinations of the last four CV with the first eight CV always included
+#Possible combinations of the firm-level variables with the region-level variables and industry-level variables always included.
 specsfeols3 <- setup(
   data = sample_data,
   y = Y,
   x = X,
   model = "feols_formula",
-  controls = CV[9:12],
-  add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Own + Export + lnOpen + Ind") #16 different models
+  controls = CV[1:6],
+  add_to_formula = "lnOpen + Endowment + Rail + lnPcgdp + Ind + Concentration")
 
 plot(specsfeols3)
 resultsfeols3 <- specr(specsfeols3, .options = opts, .progress = TRUE)
 plot(resultsfeols3)
+#Geen significant effect van X op Y, ongeacht de specifieke combinatie van controlevariabelen.
 
 #Different models and SE# (NOT RUNNED YET)
 feols_formula <- function(formula, data) {
@@ -895,6 +903,56 @@ modelsummary(model_list3,
              title = "Table 4. Results of robustness checks")
 
 
+### Table 5 ###
+#Without control variable or FE
+model1_table5 <- lm(lnEnergyeff ~ lnER, data = raw_data)
+model1_RSE_table5 <- coeftest(model1_table5, vcov. = vcovHC, type = "HC1")
+
+#With control variables, without FE
+model2_table5 <- lm(lnEnergyeff ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                    + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, data = raw_data)
+model2_RSE_table5 <- coeftest(model2_table5, vcov. = vcovHC, type = "HC1")
+
+#With control variables and industry FE
+model3_RSE_table5 <- feols(lnEnergyeff ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | ind_final, 
+                       data = raw_data,
+                       vcov = "HC1")
+
+#With control variables, year FE and firm FE
+model4_RSE_table5 <- feols(lnEnergyeff ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                       + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year, 
+                       data = raw_data,
+                       vcov = "HC1")
+
+#With control variables, industry FE, year FE and firm FE
+model5_RSE_table5 <- feols(lnEnergyeff ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                           + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                           data = raw_data,
+                           vcov = "HC1")
+
+models_list5 <- list(                           #Dit is de manier waarop je een lijst maakt van de verschillende regressiemodellen die je hebt geschat. Elk model is opgeslagen als een object (zoals model1_RSE_table5, model2_RSE_table5, enz.) en deze objecten worden gegroepeerd in de lijst models_list5.
+  "Energy efficiency" = model1_RSE_table5,      #Door de modellen in een lijst te plaatsen, kun je ze allemaal tegelijkertijd doorgeven aan de modelsummary functie. Dit bespaart tijd en moeite omdat je niet elke regressie afzonderlijk hoeft aan te roepen wanneer je de samenvattende tabel genereert.
+  "Energy efficiency" = model2_RSE_table5,
+  "Energy efficiency" = model3_RSE_table5,
+  "Energy efficiency" = model4_RSE_table5,
+  "Energy efficiency" = model5_RSE_table5)
+
+modelsummary(models_list5,
+             coef_map = c("lnER" = "lnER"),                         #In de coef_map geef je aan welke coëfficiënten je in de tabel wilt hernoemen of weergeven. De reden waarom alleen lnER in de coef_map staat, is omdat je in je oorspronkelijke code specifiek aangeeft dat je de coëfficiënt van lnER wilt weergeven in de samenvattende tabel.
+             stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),      #Dit geeft aan dat je sterretjes wilt gebruiken om de significatieniveaus van je coëfficiënten aan te geven.
+             gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",    #gof_omit verwijdert sommige statistieken zoals Adj, BIC, AIC, etc. en zorgt ervoor dat alleen de belangrijkste statistieken worden weergegeven in de output.
+             add_rows = data.frame(                                 #Hier voeg je extra rijen toe aan de tabel. In dit geval voeg je de rij "Control variables" toe, wat aangeeft of control variables in elk model zijn opgenomen ("X" geeft aan of ze aanwezig zijn). Dit helpt de lezer snel te begrijpen of en wanneer bepaalde controlevariabelen zijn opgenomen in de modellen.
+               rowname = c("Control variables"),
+               `Energy efficiency` = c("X"),
+               `Energy efficiency` = c("X"),
+               `Energy efficiency` = c("X"),
+               `Energy efficiency` = c("X"),
+               `Energy efficiency` = c("X")),
+             title = "Table 5. Checks on mechanisms of firms’ energy efficiency")
+
+
+
 ### Table 6 ###
 model1_table6 <- feols(Coalratio ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                 + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final, data = raw_data, vcov = "HC1")
@@ -921,11 +979,11 @@ modelsummary(models_list4,
   title = "Table 6. Checks on mechanisms of firms’ energy structure")
 
 ### Table 7 ###
-data_Own <- raw_data %>%
+data_Own <- raw_data %>%    #Drie nieuwe kolommen worden toegevoegd aan de dataset. (Drie binaire variabelen worden aangemaakt op basis van de waarde van Own.) 
   mutate(
-    SEO = if_else(Own == 1, 1, 0),
-    Foreign = if_else(Own == 2, 1, 0),
-    Private = if_else(Own == 3, 1, 0))
+    SEO = if_else(Own == 1, 1, 0),           #SEO wordt 1 als de waarde van de kolom Own gelijk is aan 1, anders wordt hij 0. 
+    Foreign = if_else(Own == 2, 1, 0),       #Foreign wordt 1 als de waarde van de kolom Own gelijk is aan 2, anders wordt hij 0.
+    Private = if_else(Own == 3, 1, 0))       #Private wordt 1 als de waarde van de kolom Own gelijk is aan 3, anders wordt hij 0.
 
 model1_table7 <- feols(lnEnergy ~ lnER:SEO + lnER:Foreign + lnER:Private + lnPcca + lnDa + lnSize + lnAge + Own + Export
                        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final,
@@ -960,7 +1018,7 @@ models_table7 <- list(
   "Gas ratio" = model5_table7)
 
 modelsummary(models_table7,
-             coef_map = c("lnER:SEO" = "lnER:SEO", "lnER:Foreign" = "lnER:Foreign", "lnER:Private" = "lnER:Private"),
+             coef_map = c("lnER:SEO" = "lnER:SEO", "lnER:Foreign" = "lnER:Foreign", "lnER:Private" = "lnER:Private"),     #Dit geeft aan dat de coëfficiënten genaamd lnER:SEO, lnER:Foreign, en lnER:Private in de tabel precies dezelfde naam moeten houden als ze in het model voorkomen. Dus, hier wordt geen hernoeming toegepast, omdat de oorspronkelijke en de nieuwe naam hetzelfde zijn. coef_map stelt je in staat om coëfficiëntnamen te herschrijven, zonder dat je de naam van de variabelen in het model zelf hoeft te veranderen.
              stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
              gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
              add_rows = data.frame(
@@ -973,9 +1031,9 @@ modelsummary(models_table7,
              title = "Table 7. Results of heterogeneous effects of ownership structure")
 
 ### Table 8 ###
-data_Size <- raw_data %>%
-    mutate(Large = if_else(Largefirm == 1, 1, 0),
-           Small = if_else(Largefirm == 1, 0, 1))
+data_Size <- raw_data %>%                           #Twee nieuwe kolommen worden aangemaakt in de dataset. 
+    mutate(Large = if_else(Largefirm == 1, 1, 0),   #Large krijgt de waarde 1 als de waarde van Largefirm gelijk is aan 1, anders 0.
+           Small = if_else(Largefirm == 1, 0, 1))   #Small krijgt de waarde 0 als de waarde van Largefirm gelijk is aan 1, anders 1.
 
 model1_table8 <- feols(lnEnergy ~ lnER:Large + lnER:Small + lnPcca + lnDa + lnSize + lnAge + Own + Export
                        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + Largefirm |id_in_panel + year + ind_final,
@@ -1025,8 +1083,8 @@ modelsummary(models_table8,
              title = "Table 8. Results of heterogeneous effects of firm scale")
 
 ### Table 9 ###
-data_Pollution <- raw_data %>%
-  mutate(LowPollution = if_else(HighPollution == 1, 0, 1))
+data_Pollution <- raw_data %>%                             #Een nieuwe kolom wordt toegevoegd aan de dataset, LowPollution. 
+  mutate(LowPollution = if_else(HighPollution == 1, 0, 1)) #Als de waarde van de kolom HighPollution gelijk is aan 1, krijgt de nieuwe kolom LowPollution de waarde 0. Als de waarde van HighPollution niet gelijk is aan 1, krijgt LowPollution de waarde 1.   
 
 model1_table9 <- feols(lnEnergy ~ lnER:HighPollution + lnER:LowPollution + lnPcca + lnDa + lnSize + lnAge + Own + Export
                        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + HighPollution |id_in_panel + year + ind_final,
@@ -1076,9 +1134,9 @@ modelsummary(models_table9,
              title = "Table 9. Results of heterogeneous effects of pollution intensity")
 
 ### Table 10 ###
-data_EnergyIntensity <- raw_data %>%
-  mutate(LowENINT = if_else(energy_intensive == 1, 0, 1),
-         HighENINT = if_else(energy_intensive == 1, 1, 0))
+data_EnergyIntensity <- raw_data %>%                       #Twee nieuwe kolommen worden toegevoegd aan de dataset. 
+  mutate(LowENINT = if_else(energy_intensive == 1, 0, 1),  #LowENINT krijgt de waarde 0 als de waarde van energy_intensive gelijk is aan 1. Anders krijgt het de waarde 1. 
+         HighENINT = if_else(energy_intensive == 1, 1, 0)) #HighENINT krijgt de waarde 1 als energy_intensive gelijk is aan 1. Anders krijgt het de waarde 0.
 
 model1_table10 <- feols(lnEnergy ~ lnER:HighENINT + lnER:LowENINT + lnPcca + lnDa + lnSize + lnAge + Own + Export
                        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + energy_intensive |id_in_panel + year + ind_final,
