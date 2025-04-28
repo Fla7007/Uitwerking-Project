@@ -394,6 +394,7 @@ huxreg("Robust SE" = model5_feols_RSE, "Clustered SE" = model5_feols_clustered) 
 plot(density(na.omit(raw_data$lnER)))  #Plots the density estimate of X, showing its distribution
 plot(density(na.omit(exp(raw_data$lnER)))) 
 
+#lnEnergy
 plot(density(na.omit(raw_data$lnEnergy)))  #Plots the density of Y.
 plot(density(na.omit(exp(raw_data$lnEnergy))))
 
@@ -495,18 +496,6 @@ Y <- "lnEnergy"
 X <- "lnER"
 FE <- "id_in_panel + year + ind_final"  # Fixed effects
 CV <- c("lnPcca", "lnDa", "lnSize", "lnAge", "Own", "Export", "lnOpen", "Endowment", "Rail", "lnPcgdp", "Ind", "Concentration")
-
-# Using speccurvie (DO NOT RUN THIS CODE)
-library(speccurvieR)
-SCA <- sca(y = Y, 
-        x = X,
-        controls = CV,
-        data = raw_data,
-        family = "linear",
-        fixedEffects = FE, 
-        parallel = TRUE, 
-        workers = 11) 
-## Unable to run this code: several warnings and an error "cannot allocate vector of size 1.0 Mb". Besides, my computer needs 2 days to run it.
 
 # Using specr with parallelisation
 library(fixest)
@@ -645,6 +634,19 @@ plot(resultsfeols)
           theme_minimal()
         #CONCLUSION: 
 
+        
+#All possible combinations of the selected CV with Double Lasso (NOT RUNNED YET, is this a relevant extra?)
+specsfeols_DLCV <- setup(
+          data = sample_data,
+          y = Y,
+          x = X,
+          model = "feols_formula",
+          controls = selected_CV) #4096 different models
+        
+plot(specsfeols_DLCV)
+resultsfeols_DLCV <- specr(specsfeols_DLCV, .options = opts, .progress = TRUE)
+plot(resultsfeols_DLCV)
+        
 #Possible combinations of the firm-level CVs with the other CVs always included
 #region-level variables: lnOpen; Endowment; Rail; lnPcgdp
 #industry-level variables: Ind; Concentration
@@ -692,7 +694,7 @@ resultsfeols3 <- specr(specsfeols3, .options = opts, .progress = TRUE)
 plot(resultsfeols3)
 #Geen significant effect van X op Y, ongeacht de specifieke combinatie van controlevariabelen.
 
-#Different models and SE# (NOT RUNNED YET)
+#Different models and SE# (NOT USED, too computational demanding)
 feols_formula <- function(formula, data) {
   formula <- as.formula(paste0(formula, " | ", FE))
   fixest::feols(formula, data)} #setting needed formula with feols (FE always included)
@@ -715,6 +717,19 @@ specsdifmodels <- setup(
 plot(specsdifmodels)
 resultsdifmodels <- specr(specsdifmodels, .options = opts2, .progress = TRUE)
 plot(resultsdifmodels)
+
+# Using speccurvie
+library(speccurvieR)
+SCA <- sca(y = Y, 
+           x = X,
+           controls = CV,
+           data = raw_data,
+           family = "linear",
+           fixedEffects = FE, 
+           parallel = TRUE, 
+           workers = 11) 
+## Unable to run this code: several warnings and an error "cannot allocate vector of size 1.0 Mb". Besides, my computer needs 2 days to run it.
+
 
 ####################
 ### Extra tables ###
@@ -1191,3 +1206,34 @@ modelsummary(models_table10,
                `Oil ratio` = c("X"),
                `Gas ratio` = c("X")),
              title = "Table 10. Results of heterogeneous effects of energy intensity")
+
+
+
+### EXTRA: seperation based on Export 
+model_export <- raw_data %>%
+                filter(Export == 1) %>%
+                feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own
+                      + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final,
+                      vcov = "HC1")
+
+model_nonexport <- raw_data %>%
+  filter(Export == 0) %>%
+  feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own
+        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final,
+        vcov = "HC1")
+
+model_InteractionExport<- raw_data %>%                        
+                          mutate(Nonexport = if_else(Export == 1, 0, 1)) %>%
+                          feols(lnEnergy ~ lnER:Export + lnER:Nonexport + lnPcca + lnDa + lnSize + lnAge + Own
+                                         + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final,
+                                         vcov = "HC1")
+
+modelsummary(list("Export" = model_export, "Non-export" = model_nonexport, "Interaction Export" = model_InteractionExport),
+             coef_map = c("lnER" = "lnER", "lnER:Export" = "lnER:Export", "lnER:Nonexport" = "lnER:Nonexport"),
+             stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
+             gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within")
+#CONCLUSION: effect differs between exporters and non-exporters. Suggest that non-exporters are more sensitive to domestic environmental regulations, 
+# whereas exporters, who may already face stricter international environmental standards, show a smaller adjustment. This heterogeneity highlights 
+# that firms' exposure to global markets influences how they respond to domestic environmental policies
+
+
