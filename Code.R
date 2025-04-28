@@ -787,15 +787,15 @@ model_extraFE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + 
                         data = raw_data,
                         vcov = "HC1")
 
-lagged_data <- raw_data %>%
-  arrange(id_in_panel, year) %>%                #orders observations within a panel based on year
-  group_by(id_in_panel) %>%                     #grouping by panel so lag is calculated within a panel
-  mutate(lag_lnER = dplyr::lag(lnER, 1)) %>%    #create 1-period lag
-  ungroup()
+pdata <- raw_data %>%
+  arrange(id_in_panel, year) %>%
+  pdata.frame(index = c("id_in_panel", "year")) #Create pdata.frame (panel data frame)
  
+pdata$lag_lnER <- lag(pdata$lnER, k = 1) #Generate lag
+
 model_laggedER <- feols(lnEnergy ~ lag_lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                     + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
-                    data = lagged_data,
+                    data = pdata,
                     vcov = "HC1")
 
 model_list2 <- list(
