@@ -58,42 +58,6 @@ model2_RSE <- coeftest(model2, vcov. = vcovHC, type = "HC1")
 
 
 ### Model 3 ###
-# Model 3 using plm (with control variables and industry FE)
-model3_plm <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
-              + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
-              data = raw_data,
-              index = c("ind_final"),
-              model = "within")
-model3_plm_RSE <- coeftest(model3_plm, vcov. = vcovHC, type = "HC1")
-## Does NOT give the same results as in the orginal paper: 
-## there is no constant, the standard errors aren't the same and despite the values of the point estimators 
-## being the same, the significant for some of them differ 
-
-# Model 3 using manually demeaning (with control variables and industry FE) 
-dataset_model3 <- group_by(raw_data, ind_final)
-lnER_means <- summarise(dataset_model3, mean_lnER = mean(lnER, na.rm = TRUE))
-lnEnergy_means <- summarise(dataset_model3, mean_lnEnergy = mean(lnEnergy, na.rm = TRUE))
-
-dataset_model3_demeaned <- raw_data
-
-for (i in 1:nrow(lnER_means)) {
-  posi <- which(raw_data$ind_final == lnER_means$ind_final[i])
-  dataset_model3_demeaned[posi, "lnER"] <- raw_data[posi, "lnER"] - lnER_means$mean_lnER[i]
-  dataset_model3_demeaned[posi, "lnEnergy"] <- raw_data[posi, "lnEnergy"] - lnEnergy_means$mean_lnEnergy[i]
-}
-
-raw_data$ind_final <- factor(raw_data$ind_final)
-
-model3_demean <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
-                  + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + 
-                    factor(ind_final), 
-                  data = raw_data)
-
-robust_se <- vcovHC(model3_demean, type = "HC1")
-model3_demean_RSE <- coeftest(model3_demean, vcov. = robust_se)
-## Gives the same point estimators and standard errors as in the original paper. 
-## Only the intercept is wrong since we've added a factor of ind_final to incorporate the industry FE 
-
 # Model 3 using feols (with control variables and industry FE)
 model3_feols_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                     + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | ind_final, 
@@ -101,48 +65,8 @@ model3_feols_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own
                     vcov = "HC1")
 ## Correct point estimators and SE, no constant (due to FE)
 
-#Model 3 using felm (with control variables, and industry FE)
-model3_felm <- felm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
-                 + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | ind_final, 
-                 data = raw_data)
-model3_felm_RSE <- coeftest(model3_felm, vcov = vcovHC(model3_felm, type="HC1"))
-## Correct point estimators and SE, no constant (due to FE)
 
 ### Model 4 ###
-# Model 4 using plm (with control variables, year FE and firm FE) 
-model4_plm <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
-              + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
-              data = raw_data,
-              index = c("id_in_panel", "year"),
-              model = "within")
-summary(model4)
-model4_plm_RSE <- coeftest(model4_plm, vcov. = vcovHC, type = "HC1")
-## Does NOT give the same results as in the orginal paper: 
-## there is no constant and the values of the point estimators and standard errors aren't the same
-
-# Model 4 using manually demeaning (with control variables, year FE and firm FE) 
-dataset_model4 <- group_by(raw_data,id_in_panel)
-lnER_means <- summarise(dataset_model4, mean_lnER = mean(lnER, na.rm = TRUE))
-lnEnergy_means <- summarise(dataset_model4, mean_lnEnergy = mean(lnEnergy, na.rm = TRUE))
-
-dataset_model4_demeaned <- raw_data
-
-for (i in 1:nrow(lnER_means)) {
-  posi <- which(raw_data$id_in_panel == lnER_means$id_in_panel[i])
-  dataset_model4_demeaned[posi, "lnER"] <- raw_data[posi, "lnER"] - lnER_means$mean_lnER[i]
-  dataset_model4_demeaned[posi, "lnEnergy"] <- raw_data[posi, "lnEnergy"] - lnEnergy_means$mean_lnEnergy[i]
-}
-
-model4_demean <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
-                 + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + 
-                   factor(year), factor(id_in_panel), 
-                 data = dataset_model4_demeaned)
-
-robust_se <- vcovHC(model4_demean, type = "HC1")
-model4_demean_RSE <- coeftest(model4_demean, vcov. = robust_se)
-## Does NOT give the same results as in the original paper: 
-## the values of the point estimators and standard errors aren't the same
-
 # Model 4 using feols (with control variables, year FE and firm FE)
 model4_feols_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                     + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year, 
@@ -150,73 +74,17 @@ model4_feols_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own
                     vcov = "HC1")
 ## Correct point estimators, SE sometimes slightly differ, no constant (due to FE), used much more observations (different R²)
 
-#Model 4 using felm (with control variables, year FE and firm FE)
-model4_felm <- felm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
-                 + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year, 
-                 data = raw_data)
-model4_felm_RSE <- coeftest(model4_felm, vcov = vcovHC(model4_felm, type="HC1"))
-## Correct point estimators, SE sometimes slightly differ, no constant (due to FE), used much more observations
 
 ### Model 5 ###
-# Model 5 using plm (with control variables and all FE)  
-model5_plm <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
-              + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
-              data = raw_data,
-              index = c("id_in_panel", "year","ind_final"),
-              model = "within")
-summary(model5_plm)
-model5_plm_RSE <- coeftest(model5_plm, vcov. = vcovHC, type = "HC1")
-## Does NOT give the same results as in the original paper: 
-## there is no constant and the values of the point estimators and standard errors aren't the same
-## We also observe that this code gives the exact same output as the plm of model 4
-
-# Model 5 using manually demeaning (with control variables and all FE) 
-dataset_model5 <- group_by(raw_data, ind_final)
-lnER_means <- summarise(dataset_model5, mean_lnER = mean(lnER, na.rm = TRUE))
-lnEnergy_means <- summarise(dataset_model5, mean_lnEnergy = mean(lnEnergy, na.rm = TRUE))
-dataset_model5_demeaned <- raw_data
-
-for (i in 1:nrow(lnER_means)) {
-  posi <- which(raw_data$ind_final == lnER_means$ind_final[i])
-  dataset_model5_demeaned$lnER[posi] <- raw_data$lnER[posi] - lnER_means$mean_lnER[i]
-  dataset_model5_demeaned$lnEnergy[posi] <- raw_data$lnEnergy[posi] - lnEnergy_means$mean_lnEnergy[i]
-}
-
-raw_data$ind_final <- factor(raw_data$ind_final)  
-raw_data$year <- factor(raw_data$year)            
-raw_data$id_in_panel <- factor(raw_data$id_in_panel)      
-
-model5_demean <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
-                  + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + 
-                    factor(ind_final) + factor(year) + factor(id_in_panel), 
-                  data = raw_data)
-
-robust_se <- vcovHC(model5_demean, type = "HC1")
-model5_demean_RSE <- coeftest(model5_demean, vcov. = robust_se)
-## We were unable to run this code since our computers cannot compute it for such a large dataset
-## Error: cannot allocate vector of size 44.6 Gb
-
-# Model 5 using feols (with control variables and all FE)
+# using feols (with control variables and all FE)
 model5_feols_RSE <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                     + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
                     data = raw_data,
                     vcov = "HC1")
 ## Correct point estimators, SE sometimes slightly differ, no constant (due to FE), used much more observations (different R²) 
 
-#Model 5 using felm (with control variables and all FE)
-model5_felm <- felm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
-                 + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
-                 data = raw_data)
-model5_felm_RSE <- coeftest(model5_felm, vcov = vcovHC(model5_felm, type="HC1"))
-## Correct point estimators, SE sometimes slightly differ, no constant (due to FE), used much more observations
-
 
 ### Overview ###
-#Using stargazer
-stargazer(model1_RSE, model2_RSE, model3_demean_RSE, model4_plm_RSE, model5_plm_RSE, type = "html", 
-          title = "Benchmark regression results.", digits = 3, out = "Benchmark_regression_results.html")
-## Stargazer does NOT work with the models made by feols
-
 #Using huxreg 
 huxreg(model1_RSE, model2_RSE,model3_feols_RSE, model4_feols_RSE, model5_feols_RSE, 
        statistics = c("N. obs." = "nobs", "R squared" = "r.squared"))
@@ -233,6 +101,150 @@ modelsummary(models_table2,
              stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
              gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
              title = "Table 2. Benchmark regression results") 
+
+
+
+### Additional attempts ###
+## Model 3 ##
+#Using plm (with control variables and industry FE)
+model3_plm <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                  + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
+                  data = raw_data,
+                  index = c("ind_final"),
+                  model = "within")
+model3_plm_RSE <- coeftest(model3_plm, vcov. = vcovHC, type = "HC1")
+## Does NOT give the same results as in the orginal paper: 
+## there is no constant, the standard errors aren't the same and despite the values of the point estimators 
+## being the same, the significant for some of them differ 
+
+#Using manually demeaning (with control variables and industry FE) 
+dataset_model3 <- group_by(raw_data, ind_final)
+lnER_means <- summarise(dataset_model3, mean_lnER = mean(lnER, na.rm = TRUE))
+lnEnergy_means <- summarise(dataset_model3, mean_lnEnergy = mean(lnEnergy, na.rm = TRUE))
+
+dataset_model3_demeaned <- raw_data
+
+for (i in 1:nrow(lnER_means)) {
+  posi <- which(raw_data$ind_final == lnER_means$ind_final[i])
+  dataset_model3_demeaned[posi, "lnER"] <- raw_data[posi, "lnER"] - lnER_means$mean_lnER[i]
+  dataset_model3_demeaned[posi, "lnEnergy"] <- raw_data[posi, "lnEnergy"] - lnEnergy_means$mean_lnEnergy[i]
+}
+
+raw_data$ind_final <- factor(raw_data$ind_final)
+
+model3_demean <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                    + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + 
+                      factor(ind_final), 
+                    data = raw_data)
+
+robust_se <- vcovHC(model3_demean, type = "HC1")
+model3_demean_RSE <- coeftest(model3_demean, vcov. = robust_se)
+## Gives the same point estimators and standard errors as in the original paper. 
+## Only the intercept is wrong since we've added a factor of ind_final to incorporate the industry FE 
+
+#Using felm (with control variables, and industry FE)
+model3_felm <- felm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                    + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | ind_final, 
+                    data = raw_data)
+model3_felm_RSE <- coeftest(model3_felm, vcov = vcovHC(model3_felm, type="HC1"))
+## Correct point estimators and SE, no constant (due to FE)
+
+
+## Model 4 ##
+#Using plm (with control variables, year FE and firm FE) 
+model4_plm <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                  + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
+                  data = raw_data,
+                  index = c("id_in_panel", "year"),
+                  model = "within")
+summary(model4)
+model4_plm_RSE <- coeftest(model4_plm, vcov. = vcovHC, type = "HC1")
+## Does NOT give the same results as in the orginal paper: 
+## there is no constant and the values of the point estimators and standard errors aren't the same
+
+#Using manually demeaning (with control variables, year FE and firm FE) 
+dataset_model4 <- group_by(raw_data,id_in_panel)
+lnER_means <- summarise(dataset_model4, mean_lnER = mean(lnER, na.rm = TRUE))
+lnEnergy_means <- summarise(dataset_model4, mean_lnEnergy = mean(lnEnergy, na.rm = TRUE))
+
+dataset_model4_demeaned <- raw_data
+
+for (i in 1:nrow(lnER_means)) {
+  posi <- which(raw_data$id_in_panel == lnER_means$id_in_panel[i])
+  dataset_model4_demeaned[posi, "lnER"] <- raw_data[posi, "lnER"] - lnER_means$mean_lnER[i]
+  dataset_model4_demeaned[posi, "lnEnergy"] <- raw_data[posi, "lnEnergy"] - lnEnergy_means$mean_lnEnergy[i]
+}
+
+model4_demean <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                    + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + 
+                      factor(year), factor(id_in_panel), 
+                    data = dataset_model4_demeaned)
+
+robust_se <- vcovHC(model4_demean, type = "HC1")
+model4_demean_RSE <- coeftest(model4_demean, vcov. = robust_se)
+## Does NOT give the same results as in the original paper: 
+## the values of the point estimators and standard errors aren't the same
+
+#Using felm (with control variables, year FE and firm FE)
+model4_felm <- felm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                    + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year, 
+                    data = raw_data)
+model4_felm_RSE <- coeftest(model4_felm, vcov = vcovHC(model4_felm, type="HC1"))
+## Correct point estimators, SE sometimes slightly differ, no constant (due to FE), used much more observations
+
+
+## Model 5 ##
+#Using plm (with control variables and all FE)  
+model5_plm <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                  + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration, 
+                  data = raw_data,
+                  index = c("id_in_panel", "year","ind_final"),
+                  model = "within")
+summary(model5_plm)
+model5_plm_RSE <- coeftest(model5_plm, vcov. = vcovHC, type = "HC1")
+## Does NOT give the same results as in the original paper: 
+## there is no constant and the values of the point estimators and standard errors aren't the same
+## We also observe that this code gives the exact same output as the plm of model 4
+
+#Using manually demeaning (with control variables and all FE) 
+dataset_model5 <- group_by(raw_data, ind_final)
+lnER_means <- summarise(dataset_model5, mean_lnER = mean(lnER, na.rm = TRUE))
+lnEnergy_means <- summarise(dataset_model5, mean_lnEnergy = mean(lnEnergy, na.rm = TRUE))
+dataset_model5_demeaned <- raw_data
+
+for (i in 1:nrow(lnER_means)) {
+  posi <- which(raw_data$ind_final == lnER_means$ind_final[i])
+  dataset_model5_demeaned$lnER[posi] <- raw_data$lnER[posi] - lnER_means$mean_lnER[i]
+  dataset_model5_demeaned$lnEnergy[posi] <- raw_data$lnEnergy[posi] - lnEnergy_means$mean_lnEnergy[i]
+}
+
+raw_data$ind_final <- factor(raw_data$ind_final)  
+raw_data$year <- factor(raw_data$year)            
+raw_data$id_in_panel <- factor(raw_data$id_in_panel)      
+
+model5_demean <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                    + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + 
+                      factor(ind_final) + factor(year) + factor(id_in_panel), 
+                    data = raw_data)
+
+robust_se <- vcovHC(model5_demean, type = "HC1")
+model5_demean_RSE <- coeftest(model5_demean, vcov. = robust_se)
+## We were unable to run this code since our computers cannot compute it for such a large dataset
+## Error: cannot allocate vector of size 44.6 Gb
+
+#Using felm (with control variables and all FE)
+model5_felm <- felm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
+                    + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
+                    data = raw_data)
+model5_felm_RSE <- coeftest(model5_felm, vcov = vcovHC(model5_felm, type="HC1"))
+## Correct point estimators, SE sometimes slightly differ, no constant (due to FE), used much more observations
+
+## Overview
+#Using stargazer
+stargazer(model1_RSE, model2_RSE, model3_demean_RSE, model4_plm_RSE, model5_plm_RSE, type = "html", 
+          title = "Benchmark regression results.", digits = 3, out = "Benchmark_regression_results.html")
+## Stargazer does NOT work with the models made by feols
+
 
 
 ##########################
@@ -383,9 +395,26 @@ model5_feols_clustered <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge
                           vcov = "cluster")
 
 # Comparison with original models
-huxreg("Robust SE" = model3_feols_RSE, "Clustered SE" = model3_feols_clustered)  # lnER is not anymore significantly related to lnEnergy, the same holds for some of the control variables 
-huxreg("Robust SE" = model4_feols_RSE, "Clustered SE" = model4_feols_clustered)  # Despite other standard-errors, the significance of relationships and the estimated coefficients remains the same
-huxreg("Robust SE" = model5_feols_RSE, "Clustered SE" = model5_feols_clustered)  # Despite other standard-errors, the significance of relationships and the estimated coefficients remains the same
+models_SEvariation <- list(
+  "Robust SE (3)" = model3_feols_RSE, 
+  "Clustered SE (3)" = model3_feols_clustered,
+  "Robust SE (4)" = model4_feols_RSE, 
+  "Clustered SE (4)" = model4_feols_clustered,
+  "Robust SE (5)" = model5_feols_RSE, 
+  "Clustered SE (5)" = model5_feols_clustered)
+
+modelsummary(models_SEvariation,
+             stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
+             add_rows = data.frame(
+               rowname = c("Control variables"),
+               `Robust SE (3)` = c("X"),
+               `Clustered SE (3)` = c("X"),
+               `Robust SE (4)` = c("X"),
+               `Clustered SE (4)` = c("X"),
+               `Robust SE (5)` = c("X"),
+               `Clustered SE (5)` = c("X")),
+             gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
+             title = "Robust vs clustered SE")
 
 
 ### Density plots ###
@@ -488,6 +517,16 @@ models_FE <- list(
 modelsummary(models_FE,
              coef_map = c("lnER" = "lnER"),
              stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
+             add_rows = data.frame(
+               rowname = c("Control variables"),
+               `No FE` = c("X"),
+               `Year FE` = c("X"),
+               `Firm FE` = c("X"),
+               `Industry FE` = c("X"),
+               `Year + Firm FE` = c("X"),
+               `Firm + Industry FE` = c("X"),
+               `Year + Industry FE` = c("X"),
+               `All FE` = c("X")),
              gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
              title = "Different combinations of FE")
 
@@ -578,19 +617,6 @@ plot(specslm2)
 resultslm2 <- specr(specslm2, .progress = TRUE)
 plot(resultslm2)
 
-#LM (with all CV and FE)# --> no sure if this is right since we use lm and try to include FE
-specslmFE <- setup(
-  data = sample_data,
-  y = Y,
-  x = X,
-  model = "lm",
-  controls = c("id_in_panel", "year", "ind_final"),
-  add_to_formula = "lnPcca + lnDa + lnSize + lnAge + Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration") #8 different models
-
-plot(specslmFE)
-resultslmFE <- specr(specslmFE, .progress = TRUE)
-plot(resultslmFE)
-
 #FEOLS#
 feols_formula <- function(formula, data) {
   formula <- as.formula(paste0(formula, " | ", FE))
@@ -641,10 +667,11 @@ specsfeols_DLCV <- setup(
           y = Y,
           x = X,
           model = "feols_formula",
-          controls = selected_CV) #4096 different models
+          controls = selected_CV) #4096 different models, selected_CV from Double Lasso
         
 plot(specsfeols_DLCV)
 resultsfeols_DLCV <- specr(specsfeols_DLCV, .options = opts, .progress = TRUE)
+resultsfeols_DLCV <- readRDS("resultsfeols_DLCV.RData")
 plot(resultsfeols_DLCV)
         
 #Possible combinations of the firm-level CVs with the other CVs always included
@@ -1235,5 +1262,3 @@ modelsummary(list("Export" = model_export, "Non-export" = model_nonexport, "Inte
 #CONCLUSION: effect differs between exporters and non-exporters. Suggest that non-exporters are more sensitive to domestic environmental regulations, 
 # whereas exporters, who may already face stricter international environmental standards, show a smaller adjustment. This heterogeneity highlights 
 # that firms' exposure to global markets influences how they respond to domestic environmental policies
-
-
