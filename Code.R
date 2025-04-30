@@ -100,6 +100,7 @@ models_table2 <- list(
 modelsummary(models_table2,
              stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
              gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
+             output = "Table 2. Benchmark regression results.png",
              title = "Table 2. Benchmark regression results") 
 
 
@@ -821,6 +822,7 @@ modelsummary(model_list2,
                `Export sales` = c("X"),
                `More FE` = c("X"),
                `Lagged ER` = c("X")),
+             output = "Table 3. Robustness checks' results.png",
              title = "Table 3. Robustness checks' results")
 
 ### Table 4 ###
@@ -844,7 +846,7 @@ data_exitafter2005 <- raw_data %>%
   arrange(year, .by_group = T) %>%
   mutate(sign = last(year)) %>%
   ungroup() %>%
-  filter(sign >= 2005) %>%
+  filter(sign > 2005) %>%
   select(-sign)
 model3_table4 <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                                            + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
@@ -859,7 +861,7 @@ data_changeaddresses <- raw_data %>%
     sum_na = sum(is.na(sign))
   ) %>%
   ungroup() %>%
-  filter(sum_na != 1) %>%
+  filter(sum_na == 0) %>%
   select(-sign, -sum_na)
 model4_table4 <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
@@ -874,7 +876,7 @@ data_combo <- raw_data %>%
   mutate(sign1 = last(year), sign2 = if_else(row_number() == 1 | area_final == lag(area_final), 1, NA_real_),
          sum_na = sum(is.na(sign2))) %>%
   ungroup() %>%
-  filter(sign1 >= 2005, sum_na != 1) %>%
+  filter(sign1 > 2005, sum_na == 0) %>%
   select(-sign1, -sign2, -sum_na)
 model5_table4 <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
                        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final, 
@@ -950,6 +952,7 @@ modelsummary(models_table4,
                `IV` = c("", "", "", "", "X"),
                `IV with additional controls (2001)` = c("X", "X", "", "", "X"),
                `IV with additional controls (2005)` = c("", "", "X", "X", "X")),
+             output = "Table 4. Results of robustness checks.png",
              title = "Table 4. Results of robustness checks")
 
 
@@ -1237,26 +1240,45 @@ modelsummary(models_table10,
 
 
 ### EXTRA: seperation based on Export 
-model_export <- raw_data %>%
-                filter(Export == 1) %>%
-                feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own
-                      + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final,
-                      vcov = "HC1")
-
-model_nonexport <- raw_data %>%
-  filter(Export == 0) %>%
-  feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own
+model1_Export<- raw_data %>%                        
+  mutate(Nonexport = if_else(Export == 1, 0, 1)) %>%
+  feols(lnEnergy ~ lnER:Export + lnER:Nonexport + lnPcca + lnDa + lnSize + lnAge + Own
         + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final,
         vcov = "HC1")
 
-model_InteractionExport<- raw_data %>%                        
-                          mutate(Nonexport = if_else(Export == 1, 0, 1)) %>%
-                          feols(lnEnergy ~ lnER:Export + lnER:Nonexport + lnPcca + lnDa + lnSize + lnAge + Own
-                                         + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final,
-                                         vcov = "HC1")
+model2_Export<- raw_data %>%                        
+  mutate(Nonexport = if_else(Export == 1, 0, 1)) %>%
+  feols(lnEnergyeff ~ lnER:Export + lnER:Nonexport + lnPcca + lnDa + lnSize + lnAge + Own
+        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final,
+        vcov = "HC1")
 
-modelsummary(list("Export" = model_export, "Non-export" = model_nonexport, "Interaction Export" = model_InteractionExport),
-             coef_map = c("lnER" = "lnER", "lnER:Export" = "lnER:Export", "lnER:Nonexport" = "lnER:Nonexport"),
+model3_Export<- raw_data %>%                        
+  mutate(Nonexport = if_else(Export == 1, 0, 1)) %>%
+  feols(Coalratio ~ lnER:Export + lnER:Nonexport + lnPcca + lnDa + lnSize + lnAge + Own
+        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final,
+        vcov = "HC1")
+
+model4_Export<- raw_data %>%                        
+  mutate(Nonexport = if_else(Export == 1, 0, 1)) %>%
+  feols(Oilratio ~ lnER:Export + lnER:Nonexport + lnPcca + lnDa + lnSize + lnAge + Own
+        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final,
+        vcov = "HC1")
+
+model5_Export<- raw_data %>%                        
+  mutate(Nonexport = if_else(Export == 1, 0, 1)) %>%
+  feols(Gasratio ~ lnER:Export + lnER:Nonexport + lnPcca + lnDa + lnSize + lnAge + Own
+        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration | id_in_panel + year + ind_final,
+        vcov = "HC1")
+
+models_Export <- list(
+  "lnEnergy" = model1_Export,
+  "lnEnergyeff" = model2_Export,
+  "Coal ratio" = model3_Export,
+  "Oil ratio" = model4_Export,
+  "Gas ratio" = model5_Export)
+
+modelsummary(models_Export,
+             coef_map = c("lnER:Export" = "lnER:Export", "lnER:Nonexport" = "lnER:Nonexport"),
              stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),
              gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within")
 #CONCLUSION: effect differs between exporters and non-exporters. Suggest that non-exporters are more sensitive to domestic environmental regulations, 
