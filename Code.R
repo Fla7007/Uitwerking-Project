@@ -1002,7 +1002,8 @@ modelsummary(models_table5,
                `model 3` = c("X"),
                `model 4` = c("X"),
                `model 5` = c("X")),
-             title = "Table 5. Checks on mechanisms of firms’ energy efficiency")
+             title = "Table 5. Checks on mechanisms of firms’ energy efficiency",
+             output = "Table 5. Checks on mechanisms of firms’ energy efficiency.png")
 
 
 ### Table 6 ###
