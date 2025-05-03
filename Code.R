@@ -1029,7 +1029,8 @@ modelsummary(models_list4,
     `Coal ratio` = c("X"),
     `Oil ratio` = c("X"),
     `Gas ratio` = c("X")),
-  title = "Table 6. Checks on mechanisms of firms’ energy structure")
+  title = "Table 6. Checks on mechanisms of firms’ energy structure",
+  output = "Table 6. Checks on mechanisms of firms’ energy structure.png")
 
 ### Table 7 ###
 data_Own <- raw_data %>%    #Drie nieuwe kolommen worden toegevoegd aan de dataset. (Drie binaire variabelen worden aangemaakt op basis van de waarde van Own.) 
@@ -1081,7 +1082,8 @@ modelsummary(models_table7,
                `Coal ratio` = c("X"),
                `Oil ratio` = c("X"),
                `Gas ratio` = c("X")),
-             title = "Table 7. Results of heterogeneous effects of ownership structure")
+             title = "Table 7. Results of heterogeneous effects of ownership structure",
+             output = "Table 7. Results of heterogeneous effects of ownership structure.png")
 
 ### Table 8 ###
 data_Size <- raw_data %>%                           #Twee nieuwe kolommen worden aangemaakt in de dataset. 
@@ -1133,7 +1135,8 @@ modelsummary(models_table8,
                `Coal ratio` = c("X"),
                `Oil ratio` = c("X"),
                `Gas ratio` = c("X")),
-             title = "Table 8. Results of heterogeneous effects of firm scale")
+             title = "Table 8. Results of heterogeneous effects of firm scale",
+             output = "Table 8. Results of heterogeneous effects of firm scale.png")
 
 ### Table 9 ###
 data_Pollution <- raw_data %>%                             #Een nieuwe kolom wordt toegevoegd aan de dataset, LowPollution. 
@@ -1184,7 +1187,8 @@ modelsummary(models_table9,
                `Coal ratio` = c("X"),
                `Oil ratio` = c("X"),
                `Gas ratio` = c("X")),
-             title = "Table 9. Results of heterogeneous effects of pollution intensity")
+             title = "Table 9. Results of heterogeneous effects of pollution intensity",
+             output = "Table 9. Results of heterogeneous effects of pollution intensity.png")
 
 ### Table 10 ###
 data_EnergyIntensity <- raw_data %>%                       #Twee nieuwe kolommen worden toegevoegd aan de dataset. 
@@ -1236,7 +1240,8 @@ modelsummary(models_table10,
                `Coal ratio` = c("X"),
                `Oil ratio` = c("X"),
                `Gas ratio` = c("X")),
-             title = "Table 10. Results of heterogeneous effects of energy intensity")
+             title = "Table 10. Results of heterogeneous effects of energy intensity",
+             output = "Table 10. Results of heterogeneous effects of energy intensity.png")
 
 
 
