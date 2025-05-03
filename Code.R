@@ -1290,3 +1290,26 @@ modelsummary(models_Export,
 #CONCLUSION: effect differs between exporters and non-exporters. Suggest that non-exporters are more sensitive to domestic environmental regulations, 
 # whereas exporters, who may already face stricter international environmental standards, show a smaller adjustment. This heterogeneity highlights 
 # that firms' exposure to global markets influences how they respond to domestic environmental policies
+
+
+#EXTRA: Investigating NA's
+raw_data_with_na <- raw_data %>%
+  select(where(~ any(is.na(.))))
+library(mice)
+md.pattern(raw_data)
+md.pattern(raw_data_with_na)
+library(naniar)
+gg_miss_upset(raw_data)
+gg_miss_upset(raw_data_with_na, nsets = 7)
+library(VIM)
+aggr(raw_data_with_na, numbers = TRUE, prop = c(TRUE, FALSE), sortVars = TRUE, cex.axis = 0.525)
+
+raw_data_NAfilter <- raw_data %>%
+  select(year, ind_final, id_in_panel, Lnfirmenergypre05, Lncoalcons, lnEnergy, 
+         Coalratio, Oilratio, Gasratio, lnEnergyeff) #selecting variables with more than 25% NAs + FE
+
+gg_miss_var(raw_data_NAfilter,
+            facet = year)
+
+gg_miss_var(raw_data_NAfilter,
+            facet = ind_final)
