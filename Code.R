@@ -415,7 +415,8 @@ modelsummary(models_SEvariation,
                `Robust SE (5)` = c("X"),
                `Clustered SE (5)` = c("X")),
              gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
-             title = "Robust vs clustered SE")
+             title = "Robust vs clustered SE",
+             output = "Robust vs clustered SE.png")
 
 
 ### Density plots ###
@@ -529,7 +530,8 @@ modelsummary(models_FE,
                `Year + Industry FE` = c("X"),
                `All FE` = c("X")),
              gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",
-             title = "Different combinations of FE")
+             title = "Different combinations of FE",
+             output = "Different combinations of FE.png")
 
 ### Specification curve analysis ###
 Y <- "lnEnergy"
@@ -660,15 +662,19 @@ plot(resultsfeols)
                x = "Control", y = "Inclusion Rate") +
           theme_minimal()
         #CONCLUSION: 
-
+    
         
-#All possible combinations of the selected CV with Double Lasso (NOT RUNNED YET, is this a relevant extra?)
+#All possible combinations of the selected CV with Double Lasso
+sample_data_changed <- sample_data %>%
+  rename(Lnenergyeff = lnEnergyeff) 
+selected_CV_changed <- dplyr::recode(selected_CV, "lnEnergyeff" = "Lnenergyeff") #making sure lnEnergyeff is integrated 
+
 specsfeols_DLCV <- setup(
-          data = sample_data,
+          data = sample_data_changed,
           y = Y,
           x = X,
           model = "feols_formula",
-          controls = selected_CV) #4096 different models, selected_CV from Double Lasso
+          controls = selected_CV_changed) #8192 different models, selected_CV from Double Lasso
         
 plot(specsfeols_DLCV)
 resultsfeols_DLCV <- specr(specsfeols_DLCV, .options = opts, .progress = TRUE)
