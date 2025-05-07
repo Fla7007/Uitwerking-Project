@@ -48,7 +48,6 @@ model1 <- lm(lnEnergy~lnER, data = raw_data)
 model1_RSE <- coeftest(model1, vcov. = vcovHC, type = "HC1")
 ## Gives the same point estimators and standard errors as in the original paper, no R²
 
-
 ### Model 2 ###
 # Model 2 (with control variables, without FE)
 model2 <- lm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
@@ -678,6 +677,7 @@ specsfeols_DLCV <- setup(
         
 plot(specsfeols_DLCV)
 resultsfeols_DLCV <- specr(specsfeols_DLCV, .options = opts, .progress = TRUE)
+saveRDS(resultsfeols_DLCV, file = "resultsfeols_DLCV.RData")
 resultsfeols_DLCV <- readRDS("resultsfeols_DLCV.RData")
 plot(resultsfeols_DLCV)
         
@@ -1319,3 +1319,4 @@ gg_miss_var(raw_data_NAfilter,
 
 gg_miss_var(raw_data_NAfilter,
             facet = ind_final)
+
