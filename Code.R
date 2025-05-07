@@ -680,6 +680,7 @@ plot(specsfeols_DLCV)
 resultsfeols_DLCV <- specr(specsfeols_DLCV, .options = opts, .progress = TRUE)
 resultsfeols_DLCV <- readRDS("resultsfeols_DLCV.RData")
 plot(resultsfeols_DLCV)
+saveRDS(resultsfeols_DLCV, file = 'resultsfeols_DLCV.RData')
         
 #Possible combinations of the firm-level CVs with the other CVs always included
 #region-level variables: lnOpen; Endowment; Rail; lnPcgdp
@@ -1319,3 +1320,4 @@ gg_miss_var(raw_data_NAfilter,
 
 gg_miss_var(raw_data_NAfilter,
             facet = ind_final)
+
