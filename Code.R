@@ -113,7 +113,7 @@ model3_plm <- plm(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Expor
                   index = c("ind_final"),
                   model = "within")
 model3_plm_RSE <- coeftest(model3_plm, vcov. = vcovHC, type = "HC1")
-## Does NOT give the same results as in the orginal paper: 
+## Does NOT give the same results as in the original paper: 
 ## there is no constant, the standard errors aren't the same and despite the values of the point estimators 
 ## being the same, the significant for some of them differ 
 
@@ -352,30 +352,6 @@ modelsummary(model_comparison,
                     coef(lasso_Y) #non-zero coef: area_final, Coalratio, lnEnergyeff, lnPcca, lnSize, lnAge, Ind, Lnexport, SO2removalrate, Lncoalcons, Lnenergyint2005, Largefirm, Gasratio
                     #non-zero coef in both: lnAge, Ind, Lnexport, SO2removalrate  
                     
-                   
-                    
-                    ### Code from Github Copilot
-                    # Extract the response variable (y) and predictor variables (X)
-                    NA_obs_deleted <- na.omit(raw_data)
-                    y <- NA_obs_deleted$lnEnergy
-                    X <- as.matrix(NA_obs_deleted[, -1])
-                    fixed_effects <- as.matrix(NA_obs_deleted[, c("id_in_panel", "year", "ind_final")])
-                    
-                    # Standardize the predictor variables
-                    X <- scale(X)
-                  
-                    # Combine fixed effects with the original predictors
-                    X_with_fe <- cbind(X, fixed_effects)
-                    
-                    # Perform Lasso regression with fixed effects
-                    cv_fit_fe <- cv.glmnet(X_with_fe, y, alpha = 1, nfolds = 10)
-                    best_lambda_fe <- cv_fit_fe$lambda.min
-                    lasso_model_fe <- glmnet(X_with_fe, y, alpha = 1, lambda = best_lambda_fe)
-                    
-                    # Print the coefficients of the final Lasso model with fixed effects
-                    print(coef(lasso_model_fe)) # all coef are zero
-                                 
-
 ### Clustered SE ###
 # Alternative model 3 with clusterd SE
 model3_feols_clustered <- feols(lnEnergy ~ lnER + lnPcca + lnDa + lnSize + lnAge + Own + Export
@@ -677,15 +653,7 @@ specsfeols_DLCV <- setup(
         
 plot(specsfeols_DLCV)
 resultsfeols_DLCV <- specr(specsfeols_DLCV, .options = opts, .progress = TRUE)
-saveRDS(resultsfeols_DLCV, file = "resultsfeols_DLCV.RData")
-resultsfeols_DLCV <- readRDS("resultsfeols_DLCV.RData")
 plot(resultsfeols_DLCV)
-saveRDS(resultsfeols_DLCV, file = 'resultsfeols_DLCV.RData')
-        
-#Possible combinations of the firm-level CVs with the other CVs always included
-#region-level variables: lnOpen; Endowment; Rail; lnPcgdp
-#industry-level variables: Ind; Concentration
-#firm-level variables: lnPcca; lnDa; lnSize; lnAge; Own; Export
 
 #Possible combinations of the region-level variables with the industry-level variables and firm-level variables always included.                
 specsfeols1 <- setup(
@@ -699,7 +667,7 @@ specsfeols1 <- setup(
 plot(specsfeols1)
 resultsfeols1 <- specr(specsfeols1, .options = opts, .progress = TRUE)
 plot(resultsfeols1)
-#Het effect is consistent niet-significant over alle modelspecificaties. 
+#The effect is consistently non-significant for all model specifications. 
 
 #Possible combinations of the industry-level variables with the region-level variables and firm-level variables always included.
 specsfeols2 <- setup(
@@ -713,7 +681,7 @@ specsfeols2 <- setup(
 plot(specsfeols2)
 resultsfeols2 <- specr(specsfeols2, .options = opts, .progress = TRUE)
 plot(resultsfeols2)
-#Geen significant verband tussen X en Y, ongeacht de gekozen modelspecificatie.
+#The effect is consistently non-significant for all model specifications. 
 
 #Possible combinations of the firm-level variables with the region-level variables and industry-level variables always included.
 specsfeols3 <- setup(
@@ -727,7 +695,7 @@ specsfeols3 <- setup(
 plot(specsfeols3)
 resultsfeols3 <- specr(specsfeols3, .options = opts, .progress = TRUE)
 plot(resultsfeols3)
-#Geen significant effect van X op Y, ongeacht de specifieke combinatie van controlevariabelen.
+#No significant effect, no matter which combination of CVs is used.
 
 #Different models and SE# (NOT USED, too computational demanding)
 feols_formula <- function(formula, data) {
@@ -736,7 +704,7 @@ feols_formula <- function(formula, data) {
 
 feols_formula_clu <- function(formula, data) {
   formula <- as.formula(paste0(formula, " | ", FE))
-  fixest::feols(formula, data, vcov = "cluster")} #setting needed formula with feols and clustere SE (FE always included)
+  fixest::feols(formula, data, vcov = "cluster")} #setting needed formula with feols and clustered SE (FE always included)
 
 opts2 <- furrr_options(
   globals = list(feols_formula = feols_formula, FE = FE, feols_formula_clu = feols_formula_clu),
@@ -763,7 +731,7 @@ SCA <- sca(y = Y,
            fixedEffects = FE, 
            parallel = TRUE, 
            workers = 11) 
-## Unable to run this code: several warnings and an error "cannot allocate vector of size 1.0 Mb". Besides, my computer needs 2 days to run it.
+## Unable to run this code: several warnings and an error "cannot allocate vector of size 1.0 Mb". Besides, our computer needs 2 days to run it.
 
 
 ####################
