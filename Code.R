@@ -959,18 +959,18 @@ model5_RSE_table5 <- feols(lnEnergyeff ~ lnER + lnPcca + lnDa + lnSize + lnAge +
                            data = raw_data,
                            vcov = "HC1")
 
-models_table5 <- list(                           #Dit is de manier waarop je een lijst maakt van de verschillende regressiemodellen die je hebt geschat. Elk model is opgeslagen als een object (zoals model1_RSE_table5, model2_RSE_table5, enz.) en deze objecten worden gegroepeerd in de lijst models_list5.
-  "model 1" = model1_RSE_table5,      #Door de modellen in een lijst te plaatsen, kun je ze allemaal tegelijkertijd doorgeven aan de modelsummary functie. Dit bespaart tijd en moeite omdat je niet elke regressie afzonderlijk hoeft aan te roepen wanneer je de samenvattende tabel genereert.
+models_table5 <- list(                
+  "model 1" = model1_RSE_table5,      
   "model 2" = model2_RSE_table5,
   "model 3" = model3_RSE_table5,
   "model 4" = model4_RSE_table5,
   "model 5" = model5_RSE_table5)
 
 modelsummary(models_table5,
-             coef_map = c("lnER" = "lnER"),                         #In de coef_map geef je aan welke coëfficiënten je in de tabel wilt hernoemen of weergeven. De reden waarom alleen lnER in de coef_map staat, is omdat je in je oorspronkelijke code specifiek aangeeft dat je de coëfficiënt van lnER wilt weergeven in de samenvattende tabel.
-             stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),      #Dit geeft aan dat je sterretjes wilt gebruiken om de significatieniveaus van je coëfficiënten aan te geven.
-             gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",    #gof_omit verwijdert sommige statistieken zoals Adj, BIC, AIC, etc. en zorgt ervoor dat alleen de belangrijkste statistieken worden weergegeven in de output.
-             add_rows = data.frame(                                 #Hier voeg je extra rijen toe aan de tabel. In dit geval voeg je de rij "Control variables" toe, wat aangeeft of control variables in elk model zijn opgenomen ("X" geeft aan of ze aanwezig zijn). Dit helpt de lezer snel te begrijpen of en wanneer bepaalde controlevariabelen zijn opgenomen in de modellen.
+             coef_map = c("lnER" = "lnER"),                         
+             stars = c('***' = 0.01, '**' = 0.05, '*' = 0.10),      
+             gof_omit = "Adj|BIC|AIC|RMSE|Std.Errors|R2 Within",  
+             add_rows = data.frame(                               
                rowname = c("Control variables"),
                `model 1` = c(" "),
                `model 2` = c("X"),
@@ -1008,11 +1008,11 @@ modelsummary(models_list4,
   output = "Table 6. Checks on mechanisms of firms’ energy structure.png")
 
 ### Table 7 ###
-data_Own <- raw_data %>%    #Drie nieuwe kolommen worden toegevoegd aan de dataset. (Drie binaire variabelen worden aangemaakt op basis van de waarde van Own.) 
+data_Own <- raw_data %>%     
   mutate(
-    SEO = if_else(Own == 1, 1, 0),           #SEO wordt 1 als de waarde van de kolom Own gelijk is aan 1, anders wordt hij 0. 
-    Foreign = if_else(Own == 2, 1, 0),       #Foreign wordt 1 als de waarde van de kolom Own gelijk is aan 2, anders wordt hij 0.
-    Private = if_else(Own == 3, 1, 0))       #Private wordt 1 als de waarde van de kolom Own gelijk is aan 3, anders wordt hij 0.
+    SEO = if_else(Own == 1, 1, 0),            
+    Foreign = if_else(Own == 2, 1, 0),       
+    Private = if_else(Own == 3, 1, 0))       
 
 model1_table7 <- feols(lnEnergy ~ lnER:SEO + lnER:Foreign + lnER:Private + lnPcca + lnDa + lnSize + lnAge + Own + Export
                        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration |id_in_panel + year + ind_final,
@@ -1061,9 +1061,9 @@ modelsummary(models_table7,
              output = "Table 7. Results of heterogeneous effects of ownership structure.png")
 
 ### Table 8 ###
-data_Size <- raw_data %>%                           #Twee nieuwe kolommen worden aangemaakt in de dataset. 
-    mutate(Large = if_else(Largefirm == 1, 1, 0),   #Large krijgt de waarde 1 als de waarde van Largefirm gelijk is aan 1, anders 0.
-           Small = if_else(Largefirm == 1, 0, 1))   #Small krijgt de waarde 0 als de waarde van Largefirm gelijk is aan 1, anders 1.
+data_Size <- raw_data %>%                            
+    mutate(Large = if_else(Largefirm == 1, 1, 0),   
+           Small = if_else(Largefirm == 1, 0, 1))   
 
 model1_table8 <- feols(lnEnergy ~ lnER:Large + lnER:Small + lnPcca + lnDa + lnSize + lnAge + Own + Export
                        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + Largefirm |id_in_panel + year + ind_final,
@@ -1114,8 +1114,8 @@ modelsummary(models_table8,
              output = "Table 8. Results of heterogeneous effects of firm scale.png")
 
 ### Table 9 ###
-data_Pollution <- raw_data %>%                             #Een nieuwe kolom wordt toegevoegd aan de dataset, LowPollution. 
-  mutate(LowPollution = if_else(HighPollution == 1, 0, 1)) #Als de waarde van de kolom HighPollution gelijk is aan 1, krijgt de nieuwe kolom LowPollution de waarde 0. Als de waarde van HighPollution niet gelijk is aan 1, krijgt LowPollution de waarde 1.   
+data_Pollution <- raw_data %>%                              
+  mutate(LowPollution = if_else(HighPollution == 1, 0, 1))    
 
 model1_table9 <- feols(lnEnergy ~ lnER:HighPollution + lnER:LowPollution + lnPcca + lnDa + lnSize + lnAge + Own + Export
                        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + HighPollution |id_in_panel + year + ind_final,
@@ -1166,9 +1166,9 @@ modelsummary(models_table9,
              output = "Table 9. Results of heterogeneous effects of pollution intensity.png")
 
 ### Table 10 ###
-data_EnergyIntensity <- raw_data %>%                       #Twee nieuwe kolommen worden toegevoegd aan de dataset. 
-  mutate(LowENINT = if_else(energy_intensive == 1, 0, 1),  #LowENINT krijgt de waarde 0 als de waarde van energy_intensive gelijk is aan 1. Anders krijgt het de waarde 1. 
-         HighENINT = if_else(energy_intensive == 1, 1, 0)) #HighENINT krijgt de waarde 1 als energy_intensive gelijk is aan 1. Anders krijgt het de waarde 0.
+data_EnergyIntensity <- raw_data %>%                        
+  mutate(LowENINT = if_else(energy_intensive == 1, 0, 1),   
+         HighENINT = if_else(energy_intensive == 1, 1, 0)) 
 
 model1_table10 <- feols(lnEnergy ~ lnER:HighENINT + lnER:LowENINT + lnPcca + lnDa + lnSize + lnAge + Own + Export
                        + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration + energy_intensive |id_in_panel + year + ind_final,
@@ -1288,4 +1288,3 @@ gg_miss_var(raw_data_NAfilter,
 
 gg_miss_var(raw_data_NAfilter,
             facet = ind_final)
-
