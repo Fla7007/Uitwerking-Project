@@ -1,3 +1,7 @@
+##################
+###Pre-analyses###
+##################
+
 #Loading necessary packages
 library(dplyr)
 library(tidyr)
@@ -13,6 +17,14 @@ library(webshot2)
 library(huxtable)
 library(Hmisc)
 library(ggplot2)
+library(writexl)
+library(fixest)
+library(specr)
+library(furrr)
+library(hdm)
+library(mice)
+library(naniar)
+library(VIM)
 
 #Reading data
 raw_data <- read_dta("data.dta")
@@ -22,6 +34,7 @@ View(raw_data)
 raw_data2 <- read_dta("20012009firm.dta")
 summary(raw_data2)
 View(raw_data2)
+
 
 #######################
 ###Descriptive table###
@@ -252,8 +265,8 @@ stargazer(model1_RSE, model2_RSE, model3_demean_RSE, model4_plm_RSE, model5_plm_
 ##########################
 
 ### Control variables ###
-# Correlation/p-value table
-library(writexl)
+## Correlation/p-value table ##
+
 cor <- round(rcorr(as.matrix(raw_data))$r, 3)
 cor[, c("lnEnergy", "lnER")]
 cor_selected <- as.data.frame(cor[, c("lnEnergy", "lnER")])
@@ -270,8 +283,8 @@ write_xlsx(cor_pvalue_selected, "pvalue_table.xlsx")  # Excel file
 ## So actually all variables might be chosen as control variables, except for Gasratio and TargetDummy
 ## HOWEVER: since we are dealing with a large data set, this method might not be ideal so these findings should not be implemented
 
-# Double Lasso
-library(hdm)
+
+## Double Lasso ##
 lasso_Y <- rlasso(lnEnergy ~ lnER + citycode + age + L + area_final + Coalratio + Oilratio + lnEnergyeff + lnPcca + lnDa +
                     lnSize + lnAge + Own + Export + lnOpen + Ind + Endowment + Rail + lnPcgdp + Concentration +
                     Lnexport + LnERSO2 + LnERCOD + SO2removalrate + reductionper + codtarget + Lncoalcons +
@@ -514,23 +527,18 @@ X <- "lnER"
 FE <- "id_in_panel + year + ind_final"  # Fixed effects
 CV <- c("lnPcca", "lnDa", "lnSize", "lnAge", "Own", "Export", "lnOpen", "Endowment", "Rail", "lnPcgdp", "Ind", "Concentration")
 
-# Using specr with parallelisation
-library(fixest)
-library(specr)
-library(furrr)
-
-#Taking a random sample#
+#Taking a random sample
 data_NAY <- raw_data %>% drop_na(lnEnergy) #remove NA from the Y variable
 set.seed(123)
 sample_data <- data_NAY %>%
   group_by(ind_final, id_in_panel) %>%
-  sample_frac(0.25) %>%  # Take a random sample of 20% of the firms for each industry
+  sample_frac(0.25) %>%  # Take a random sample of 25% of the firms for each industry
   ungroup()  # Remove the grouping to return the full data
 
-#Setting parallelisation#
+#Setting parallelisation
 plan(strategy = multisession, workers = 5)
 
-#LM (without FE)#
+# LM (without FE) #
 #All possible combinations of the 12 selected control variables
 specslm <- setup(
   data = sample_data,
@@ -562,7 +570,7 @@ plot(resultslm)
       labs(title = paste("Control Inclusion in Top/Bottom", 200, "Specs"),
            x = "Control", y = "Inclusion Rate") +
       theme_minimal()
-    #CONCLUSION: 
+      #CONCLUSION: 
       ## lnPcca is always included in the most negative models and never in the most positive ones => suggests a negative polarising effect 
       ## lnSize and lnOpen are often included in the most positive models and never in the most negative ones => suggests a positive polarising effect
       ## Endowment and Concentration are included in both groups. However, they are more present in the positive models than in the negative ones
@@ -595,7 +603,7 @@ plot(specslm2)
 resultslm2 <- specr(specslm2, .progress = TRUE)
 plot(resultslm2)
 
-#FEOLS#
+# FEOLS #
 feols_formula <- function(formula, data) {
   formula <- as.formula(paste0(formula, " | ", FE))
   fixest::feols(formula, data)}   #setting needed formula with feols (FE always included)
@@ -636,8 +644,7 @@ plot(resultsfeols)
           labs(title = paste("Control Inclusion in Top/Bottom", 200, "Specs"),
                x = "Control", y = "Inclusion Rate") +
           theme_minimal()
-        #CONCLUSION: 
-    
+        
         
 #All possible combinations of the selected CV with Double Lasso
 sample_data_changed <- sample_data %>%
@@ -667,7 +674,7 @@ specsfeols1 <- setup(
 plot(specsfeols1)
 resultsfeols1 <- specr(specsfeols1, .options = opts, .progress = TRUE)
 plot(resultsfeols1)
-#The effect is consistently non-significant for all model specifications. 
+##The effect is consistently non-significant for all model specifications. 
 
 #Possible combinations of the industry-level variables with the region-level variables and firm-level variables always included.
 specsfeols2 <- setup(
@@ -681,7 +688,7 @@ specsfeols2 <- setup(
 plot(specsfeols2)
 resultsfeols2 <- specr(specsfeols2, .options = opts, .progress = TRUE)
 plot(resultsfeols2)
-#The effect is consistently non-significant for all model specifications. 
+##The effect is consistently non-significant for all model specifications. 
 
 #Possible combinations of the firm-level variables with the region-level variables and industry-level variables always included.
 specsfeols3 <- setup(
@@ -695,9 +702,9 @@ specsfeols3 <- setup(
 plot(specsfeols3)
 resultsfeols3 <- specr(specsfeols3, .options = opts, .progress = TRUE)
 plot(resultsfeols3)
-#No significant effect, no matter which combination of CVs is used.
+##No significant effect, no matter which combination of CVs is used.
 
-#Different models and SE# (NOT USED, too computational demanding)
+# Different models and SE # (NOT USED, too computational demanding)
 feols_formula <- function(formula, data) {
   formula <- as.formula(paste0(formula, " | ", FE))
   fixest::feols(formula, data)} #setting needed formula with feols (FE always included)
@@ -721,7 +728,7 @@ plot(specsdifmodels)
 resultsdifmodels <- specr(specsdifmodels, .options = opts2, .progress = TRUE)
 plot(resultsdifmodels)
 
-# Using speccurvie
+# Using speccurvie # (NOT USED, too computational demanding)
 library(speccurvieR)
 SCA <- sca(y = Y, 
            x = X,
@@ -1269,14 +1276,14 @@ modelsummary(models_Export,
 
 #EXTRA: Investigating NA's
 raw_data_with_na <- raw_data %>%
-  select(where(~ any(is.na(.))))
-library(mice)
+  select(where(~ any(is.na(.)))) #dataset which only contains the variables with NAs
+
 md.pattern(raw_data)
 md.pattern(raw_data_with_na)
-library(naniar)
+
 gg_miss_upset(raw_data)
 gg_miss_upset(raw_data_with_na, nsets = 7)
-library(VIM)
+
 aggr(raw_data_with_na, numbers = TRUE, prop = c(TRUE, FALSE), sortVars = TRUE, cex.axis = 0.525)
 
 raw_data_NAfilter <- raw_data %>%
